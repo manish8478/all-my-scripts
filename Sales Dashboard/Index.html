@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Factory Sales Dashboard 2026-27</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --green1:#0a2e1a;--green2:#0f4a2a;--green3:#166534;--green4:#15803d;
+  --green5:#16a34a;--green6:#22c55e;--green7:#86efac;--green8:#bbf7d0;
+  --green9:#dcfce7;--green10:#f0fdf4;
+  --navy:#061022;--blue1:#0d2347;--blue2:#1a4080;--blue3:#2563eb;
+  --blue4:#3b82f6;--blue5:#60a5fa;--blue6:#93c5fd;--blue7:#bfdbfe;
+  --blue8:#dbeafe;--blue9:#eff6ff;--bg:#eef3fc;--muted:#64748b;
+  --sidebar:230px;--radius:14px;
+  --shadow:0 4px 20px rgba(37,99,235,0.10);
+  --shadow-lg:0 10px 36px rgba(37,99,235,0.18);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--navy);min-height:100vh;overflow-x:hidden;}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-thumb{background:var(--blue6);border-radius:99px;}
+
+/* ============================================================
+   LOGIN SCREEN
+   ============================================================ */
+#loginScreen{
+  position:fixed;inset:0;z-index:2000;
+  display:flex;align-items:stretch;
+  transition:opacity 0.7s,transform 0.7s;
+}
+#loginScreen.hide{opacity:0;transform:scale(1.04);pointer-events:none;}
+
+/* LEFT PANEL */
+.ls-left{
+  flex:1.1;
+  background:linear-gradient(155deg,#061022 0%,#0d2347 35%,#1a4080 70%,#2563eb 100%);
+  padding:52px 48px;
+  display:flex;flex-direction:column;
+  position:relative;overflow:hidden;
+}
+.ls-left::before{
+  content:'';position:absolute;width:360px;height:360px;border-radius:50%;
+  background:rgba(96,165,250,0.10);top:-100px;right:-100px;pointer-events:none;
+}
+.ls-left::after{
+  content:'';position:absolute;width:250px;height:250px;border-radius:50%;
+  background:rgba(37,99,235,0.08);bottom:-60px;left:-60px;pointer-events:none;
+}
+.ls-blob-mid{
+  position:absolute;width:180px;height:180px;border-radius:50%;
+  background:rgba(96,165,250,0.06);top:50%;left:40%;transform:translate(-50%,-50%);
+  pointer-events:none;
+}
+.ls-brand-wrap{display:flex;flex-direction:column;gap:14px;margin-bottom:40px;position:relative;z-index:1;}
+.ls-year-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(96,165,250,0.16);border:1px solid rgba(96,165,250,0.32);
+  border-radius:8px;padding:5px 13px;
+  font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;
+  color:#93c5fd;letter-spacing:1.5px;width:fit-content;
+}
+.ls-year-dot{width:6px;height:6px;border-radius:50%;background:#60a5fa;animation:pulse 2s ease infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+
+/* ✅ FIXED: Logo container — fixed height, proper fit */
+.ls-logo-box{
+  width:fit-content;
+  max-width:200px;
+  background:#fff;
+  border-radius:12px;
+  padding:10px 16px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.ls-logo-box img{
+  height:44px;       /* fixed height — logo won't overflow */
+  width:auto;        /* maintain aspect ratio */
+  display:block;
+  object-fit:contain;
+}
+
+.ls-headline{font-family:'Outfit',sans-serif;font-size:38px;font-weight:900;color:#fff;line-height:1.1;margin-bottom:12px;position:relative;z-index:1;}
+.ls-headline em{color:#60a5fa;font-style:normal;}
+.ls-tagline{font-size:13.5px;color:rgba(255,255,255,0.45);line-height:1.7;margin-bottom:38px;position:relative;z-index:1;max-width:260px;}
+.ls-tags{display:flex;flex-wrap:wrap;gap:8px;position:relative;z-index:1;}
+.ls-tag{
+  display:inline-flex;align-items:center;gap:7px;
+  background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);
+  border-radius:99px;padding:7px 14px;
+  font-size:12px;color:rgba(255,255,255,0.65);font-weight:500;
+}
+.ls-tag-icon{font-size:13px;}
+.ls-features{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  margin-top:20px;
+  align-items:flex-start;
+}
+
+.ls-feat{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:10px 16px;
+  border-radius:14px;
+
+  width:340px;   /* 🔥 perfect premium width */
+
+  background:rgba(255,255,255,0.08);           /* glass effect */
+  border:1px solid rgba(255,255,255,0.12);
+  backdrop-filter:blur(10px);
+
+  box-shadow:0 4px 20px rgba(0,0,0,0.15);
+
+  transition:all 0.25s ease;
+}
+
+/* 🔥 hover premium animation */
+.ls-feat:hover{
+  background:rgba(255,255,255,0.12);
+  transform:translateX(6px) scale(1.02);
+  box-shadow:0 10px 30px rgba(0,0,0,0.25);
+}
+
+/* icon */
+.ls-feat-icon{
+  width:34px;
+  height:34px;
+  border-radius:10px;
+
+  background:linear-gradient(135deg,#3b82f6,#60a5fa);
+  color:#fff;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:14px;
+  flex-shrink:0;
+
+  box-shadow:0 4px 12px rgba(59,130,246,0.4);
+}
+
+/* text */
+.ls-feat-text{
+  font-size:12.5px;
+  color:rgba(255,255,255,0.85);
+  font-weight:500;
+  letter-spacing:0.2px;
+}
+
+/* RIGHT PANEL */
+.ls-right{
+  flex:0 0 420px;
+  background:#fff;
+  padding:52px 48px;
+  display:flex;flex-direction:column;justify-content:center;
+  position:relative;
+}
+.ls-right::before{
+  content:'';position:absolute;inset:0;
+  background-image:radial-gradient(circle,#bfdbfe 1px,transparent 1px);
+  background-size:28px 28px;opacity:0.30;pointer-events:none;
+}
+.ls-right > *{position:relative;z-index:1;}
+.ls-secure-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:#eff6ff;border:1px solid #bfdbfe;
+  border-radius:8px;padding:5px 13px;
+  font-size:11px;font-weight:700;color:#1a4080;letter-spacing:0.8px;
+  margin-bottom:22px;width:fit-content;
+}
+.ls-welcome{font-family:'Outfit',sans-serif;font-size:30px;font-weight:900;color:#061022;margin-bottom:5px;}
+.ls-sub{font-size:13.5px;color:#64748b;margin-bottom:32px;}
+.ls-field{margin-bottom:18px;}
+.ls-label{display:block;font-size:10px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:#94a3b8;margin-bottom:8px;}
+.ls-input{
+  width:100%;padding:13px 16px;
+  border-radius:12px;background:#f8faff;
+  border:1.5px solid #dbeafe;
+  color:#061022;font-size:13.5px;font-family:'DM Sans',sans-serif;
+  outline:none;transition:all 0.25s;
+  box-shadow:0 2px 8px rgba(37,99,235,0.05);
+}
+.ls-input::placeholder{color:#b0bec5;}
+.ls-input:focus{background:#fff;border-color:#2563eb;box-shadow:0 0 0 4px rgba(37,99,235,0.10);}
+.ls-btn{
+  width:100%;padding:14px;
+  border-radius:12px;border:none;cursor:pointer;
+  background:linear-gradient(135deg,#1a4080,#2563eb);
+  color:#fff;font-family:'Outfit',sans-serif;
+  font-size:16px;font-weight:700;
+  margin-top:4px;letter-spacing:0.3px;
+  position:relative;overflow:hidden;
+  transition:all 0.25s;
+  box-shadow:0 8px 28px rgba(37,99,235,0.38);
+}
+.ls-btn:hover{transform:translateY(-2px);box-shadow:0 14px 36px rgba(37,99,235,0.55);}
+.ls-btn.loading{pointer-events:none;}
+.ls-btn .btn-text{transition:opacity 0.2s;}
+.ls-btn.loading .btn-text{opacity:0;}
+.ls-spinner{display:none;position:absolute;inset:0;align-items:center;justify-content:center;}
+.ls-btn.loading .ls-spinner{display:flex;}
+.ls-spinner::after{content:'';width:20px;height:20px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+#loginErr{margin-top:12px;padding:10px 14px;border-radius:10px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);color:#dc2626;font-size:13px;display:none;animation:shake 0.4s ease;}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.ls-divider{display:flex;align-items:center;gap:10px;margin:20px 0 12px;width:100%;}
+.ls-divider::before,.ls-divider::after{content:'';flex:1;height:1px;background:#e8f0fe;}
+.ls-divider-text{font-size:11px;color:#94a3b8;white-space:nowrap;flex-shrink:0;}
+.ls-footer{text-align:center;font-size:11.5px;color:#94a3b8;}
+.ls-footer span{color:#2563eb;font-weight:600;}
+
+@media(max-width:700px){
+  #loginScreen{flex-direction:column;}
+  .ls-left{display:none;}
+  .ls-right{flex:1;padding:36px 28px;}
+}
+
+/* ============================================================
+   GLOBAL LOADER
+   ============================================================ */
+#globalLoader{position:fixed;inset:0;z-index:1500;background:rgba(6,16,34,0.78);backdrop-filter:blur(8px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;transition:opacity 0.4s;}
+#globalLoader.hide{opacity:0;pointer-events:none;}
+.gl-ring{width:52px;height:52px;border-radius:50%;border:3px solid rgba(255,255,255,0.1);border-top-color:#22c55e;animation:spin 0.8s linear infinite;}
+.gl-text{font-family:'Outfit',sans-serif;font-size:17px;font-weight:600;color:#fff;}
+.gl-sub{font-size:12px;color:rgba(255,255,255,0.4);}
+
+/* ============================================================
+   DASHBOARD
+   ============================================================ */
+#dashboard{display:none;min-height:100vh;}
+#dashboard.show{display:flex;}
+
+/* SIDEBAR */
+.sidebar{width:var(--sidebar);min-height:100vh;flex-shrink:0;position:sticky;top:0;left:0;background:linear-gradient(180deg,#061022 0%,#0d2347 50%,#1a4080 100%);display:flex;flex-direction:column;overflow:hidden;box-shadow:4px 0 28px rgba(6,16,34,0.4);animation:sideIn 0.55s cubic-bezier(.34,1.56,.64,1);}
+@keyframes sideIn{from{transform:translateX(-100%);}to{transform:translateX(0);}}
+.sb-logo{padding:24px 20px 20px;border-bottom:1px solid rgba(255,255,255,0.07);}
+.sb-logo .brand{font-family:'Outfit',sans-serif;font-size:20px;font-weight:900;color:#fff;line-height:1;}
+.sb-logo .brand em{color:#22c55e;font-style:normal;}
+.sb-logo .yr{display:inline-block;margin-top:6px;background:rgba(34,197,94,0.18);border:1px solid rgba(134,239,172,0.28);border-radius:6px;padding:2px 8px;font-size:11px;font-weight:600;color:#86efac;letter-spacing:1px;}
+.sb-section{padding:16px 18px 5px;font-size:10px;font-weight:700;letter-spacing:2.5px;color:rgba(255,255,255,0.22);text-transform:uppercase;}
+.sb-months{flex:1;overflow-y:auto;padding-bottom:8px;}
+.sb-months::-webkit-scrollbar{width:0;}
+.mb{display:flex;align-items:center;gap:9px;margin:2px 10px;padding:8px 12px;border-radius:10px;border:none;background:transparent;cursor:pointer;width:calc(100% - 20px);color:rgba(255,255,255,0.52);font-size:13px;font-weight:500;font-family:'DM Sans',sans-serif;text-align:left;transition:all 0.22s;}
+.mb:hover{background:rgba(255,255,255,0.08);color:#fff;transform:translateX(3px);}
+.mb.active{background:linear-gradient(135deg,rgba(22,163,74,0.38),rgba(34,197,94,0.18));color:#fff;font-weight:600;box-shadow:0 4px 14px rgba(22,163,74,0.18);}
+.mb .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;background:rgba(255,255,255,0.18);transition:all 0.22s;}
+.mb.active .dot{background:#22c55e;box-shadow:0 0 8px #22c55e;}
+.mb .cnt{margin-left:auto;font-size:11px;font-weight:700;background:rgba(255,255,255,0.08);border-radius:5px;padding:1px 6px;color:rgba(255,255,255,0.4);transition:all 0.22s;}
+.mb.active .cnt{background:rgba(134,239,172,0.28);color:#86efac;}
+.sb-user{border-top:1px solid rgba(255,255,255,0.07);padding:14px 18px 18px;}
+.user-row{display:flex;align-items:center;gap:10px;}
+.u-ava{width:35px;height:35px;border-radius:11px;flex-shrink:0;background:linear-gradient(135deg,#166534,#22c55e);display:flex;align-items:center;justify-content:center;font-family:'Outfit',sans-serif;font-weight:800;font-size:14px;color:#fff;box-shadow:0 4px 12px rgba(22,163,74,0.4);}
+.u-name{font-size:13px;font-weight:600;color:#fff;}
+.u-role{font-size:11px;color:rgba(255,255,255,0.32);}
+.logout-btn{margin-top:10px;width:100%;padding:8px;border-radius:9px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:rgba(255,255,255,0.38);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.22s;}
+.logout-btn:hover{border-color:rgba(239,68,68,0.4);background:rgba(239,68,68,0.1);color:#fca5a5;}
+
+/* MAIN */
+.main{flex:1;min-width:0;padding:20px 22px;background:linear-gradient(145deg,#eef3fc 0%,#e4edf9 40%,#dce7f8 100%);animation:mainIn 0.6s ease 0.15s both;overflow-x:hidden;}
+@keyframes mainIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+.page-title{font-family:'Outfit',sans-serif;font-size:22px;font-weight:900;color:var(--navy);flex:1;line-height:1.1;}
+.page-title em{color:var(--blue3);font-style:normal;}
+.page-title small{display:block;font-size:11px;font-weight:400;color:var(--muted);margin-top:2px;font-family:'DM Sans',sans-serif;}
+
+/* Refresh Button */
+.refresh-btn{
+  display:inline-flex;align-items:center;gap:7px;
+  background:#fff;border:1.5px solid #bfdbfe;
+  border-radius:10px;padding:8px 14px;
+  font-size:12.5px;font-weight:600;color:var(--blue2);
+  cursor:pointer;transition:all 0.22s;
+  box-shadow:0 2px 8px rgba(37,99,235,0.08);
+  font-family:'DM Sans',sans-serif;
+}
+.refresh-btn:hover{background:var(--blue9);border-color:var(--blue5);box-shadow:0 4px 16px rgba(37,99,235,0.18);transform:translateY(-1px);}
+.refresh-btn.spinning .refresh-icon{animation:spin 0.7s linear infinite;}
+.refresh-icon{display:inline-block;font-size:14px;}
+
+/* Google Sheets button */
+.sheets-btn{
+  display:inline-flex;align-items:center;gap:8px;
+  background:#fff;border:1.5px solid #d1fae5;
+  border-radius:10px;padding:8px 15px;
+  font-size:12.5px;font-weight:600;color:#166534;
+  text-decoration:none;cursor:pointer;
+  transition:all 0.22s;
+  box-shadow:0 2px 8px rgba(22,163,74,0.10);
+  font-family:'DM Sans',sans-serif;
+}
+.sheets-btn:hover{background:#f0fdf4;border-color:#86efac;box-shadow:0 4px 16px rgba(22,163,74,0.20);transform:translateY(-1px);}
+.sheets-icon{width:20px;height:20px;flex-shrink:0;}
+
+.search-wrap{flex:0 0 260px;display:flex;align-items:center;gap:9px;background:#fff;border:1.5px solid var(--blue8);border-radius:12px;padding:9px 14px;box-shadow:var(--shadow);transition:all 0.3s;}
+.search-wrap:focus-within{border-color:var(--blue4);box-shadow:0 0 0 3px rgba(59,130,246,0.12);}
+.search-wrap svg{color:var(--blue4);flex-shrink:0;}
+.search-wrap input{border:none;outline:none;font-size:13px;color:var(--navy);width:100%;background:transparent;font-family:'DM Sans',sans-serif;}
+.search-wrap input::placeholder{color:var(--muted);}
+
+/* FILTER ROW */
+.filter-row{display:flex;align-items:center;gap:9px;margin-bottom:16px;flex-wrap:wrap;}
+.active-badge{padding:7px 15px;border-radius:9px;background:linear-gradient(135deg,var(--blue2),var(--blue4));color:#fff;font-size:12px;font-weight:700;font-family:'Outfit',sans-serif;box-shadow:0 4px 14px rgba(37,99,235,0.3);}
+.fsel{padding:8px 28px 8px 12px;border-radius:9px;border:1.5px solid var(--blue8);background:#fff;font-size:12.5px;color:var(--navy);cursor:pointer;font-family:'DM Sans',sans-serif;outline:none;transition:all 0.22s;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg width='11' height='7' viewBox='0 0 11 7' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5.5 6L10 1' stroke='%232563eb' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;box-shadow:0 2px 8px rgba(59,130,246,0.06);}
+.fsel:focus{border-color:var(--blue4);}
+.clear-btn{padding:8px 14px;border-radius:9px;border:1.5px solid var(--blue8);background:#fff;font-size:12.5px;color:var(--blue3);cursor:pointer;font-weight:600;font-family:'DM Sans',sans-serif;transition:all 0.22s;}
+.clear-btn:hover{background:var(--blue9);}
+
+/* TOTAL SALES BANNER */
+.ts-banner{display:flex;align-items:stretch;background:#fff;border-radius:var(--radius);border:2px solid var(--blue7);box-shadow:var(--shadow);margin-bottom:14px;overflow:hidden;animation:cardIn 0.5s ease both;}
+.ts-title-box{padding:0 24px;display:flex;align-items:center;flex-shrink:0;min-width:155px;border-right:2px solid var(--blue8);background:linear-gradient(135deg,#fff 60%,var(--blue9));}
+.ts-cards{display:flex;flex:1;}
+.ts-card{flex:1;padding:12px 18px;display:flex;flex-direction:column;justify-content:center;border-right:2px solid rgba(255,255,255,0.6);position:relative;transition:filter 0.2s;}
+.ts-card:last-child{border-right:none;}
+.ts-card:hover{filter:brightness(0.97);}
+.tc-label{font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:5px;}
+.tc-val{font-family:'Outfit',sans-serif;font-size:19px;font-weight:900;line-height:1;white-space:nowrap;}
+.tc-mt{background:linear-gradient(135deg,#e0f2fe,#bae6fd);}
+.tc-mt .tc-label{color:#0369a1;}.tc-mt .tc-val{color:#0c4a6e;}
+.tc-nos{background:linear-gradient(135deg,#fce7f3,#fbcfe8);}
+.tc-nos .tc-label{color:#9d174d;}.tc-nos .tc-val{color:#831843;}
+.tc-sets{background:linear-gradient(135deg,#f3e8ff,#e9d5ff);}
+.tc-sets .tc-label{color:#6b21a8;}.tc-sets .tc-val{color:#581c87;}
+.tc-basic{background:linear-gradient(135deg,#fef9c3,#fde68a);}
+.tc-basic .tc-label{color:#92400e;}.tc-basic .tc-val{color:#78350f;}
+.tc-total{background:linear-gradient(135deg,#dcfce7,#bbf7d0);}
+.tc-total .tc-label{color:#065f46;}.tc-total .tc-val{color:#064e3b;}
+@keyframes cardIn{from{opacity:0;transform:translateY(18px) scale(0.97);}to{opacity:1;transform:translateY(0) scale(1);}}
+
+/* KPI ROW 2 */
+.kpi2-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px;}
+.kpi2{background:#fff;border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow);border:1px solid rgba(219,234,254,0.7);position:relative;overflow:hidden;transition:all 0.3s;animation:cardIn 0.5s ease both;}
+.kpi2:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg);}
+.kpi2::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--blue2),var(--blue5));}
+.kpi2-label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.kpi2-val{font-family:'Outfit',sans-serif;font-size:22px;font-weight:900;color:var(--navy);line-height:1;margin-bottom:2px;}
+.kpi2-sub{font-size:11px;color:var(--muted);}
+.kpi2-ico{position:absolute;right:13px;top:13px;width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;}
+
+/* CHARTS */
+.chart-row{display:grid;grid-template-columns:1.55fr 1fr;gap:12px;margin-bottom:14px;}
+.ccard{background:#fff;border-radius:var(--radius);padding:15px 17px;box-shadow:var(--shadow);border:1px solid rgba(219,234,254,0.7);}
+.ccard-title{font-family:'Outfit',sans-serif;font-size:12.5px;font-weight:800;color:var(--navy);margin-bottom:10px;display:flex;align-items:center;gap:7px;}
+.ccard-title::before{content:'';width:3px;height:13px;border-radius:99px;background:linear-gradient(180deg,var(--blue3),var(--blue5));}
+
+/* TABLE */
+.tcard{background:#fff;border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow);border:1px solid rgba(219,234,254,0.7);overflow:hidden;}
+.tcard-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px;flex-wrap:wrap;gap:8px;}
+.tcard-title{font-family:'Outfit',sans-serif;font-size:14px;font-weight:800;color:var(--navy);display:flex;align-items:center;gap:7px;}
+.tcard-title::before{content:'';width:3px;height:16px;border-radius:99px;background:linear-gradient(180deg,var(--blue3),var(--blue5));}
+.row-count{font-size:11px;color:var(--muted);background:var(--blue9);padding:3px 10px;border-radius:99px;border:1px solid var(--blue8);}
+.tbl-wrap{overflow:auto;max-height:480px;border-radius:10px;border:1px solid var(--blue8);}
+table{width:100%;border-collapse:separate;border-spacing:0;font-size:12px;}
+thead th{padding:9px 10px;text-align:left;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--blue2);white-space:nowrap;background:linear-gradient(135deg,var(--blue9),var(--blue8));border-bottom:2px solid var(--blue7);position:sticky;top:0;z-index:2;box-shadow:0 2px 4px rgba(37,99,235,0.08);}
+tbody tr{border-bottom:1px solid var(--blue9);transition:background 0.16s;}
+tbody tr:hover{background:var(--blue9);}
+tbody tr:last-child{border-bottom:none;}
+tbody td{padding:8px 10px;color:var(--navy);vertical-align:middle;}
+.badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:99px;font-size:10.5px;font-weight:700;}
+.bg-pvt{background:#dbeafe;color:#1d4ed8;}
+.bg-govt{background:#d1fae5;color:#059669;}
+.val-cell{font-weight:700;color:var(--blue2);}
+.po-cell{font-weight:600;font-size:11.5px;}
+.date-cell{font-size:11.5px;color:#0369a1;font-weight:600;}
+.empty-row td{text-align:center;padding:44px;color:var(--muted);font-size:13px;}
+.pag{display:flex;align-items:center;justify-content:space-between;margin-top:13px;padding-top:13px;border-top:1px solid var(--blue9);flex-wrap:wrap;gap:8px;}
+.pag-info{font-size:11px;color:var(--muted);}
+.pag-btns{display:flex;gap:5px;}
+.pg-btn{padding:5px 11px;border-radius:7px;border:1.5px solid var(--blue8);background:#fff;font-size:11px;font-weight:600;color:var(--blue2);cursor:pointer;transition:all 0.2s;font-family:'DM Sans',sans-serif;}
+.pg-btn:hover{background:var(--blue9);}
+.pg-btn.active{background:var(--blue3);color:#fff;border-color:var(--blue3);}
+.pg-btn:disabled{opacity:0.38;cursor:not-allowed;}
+
+@media(max-width:1100px){.kpi2-row{grid-template-columns:repeat(2,1fr);}.chart-row{grid-template-columns:1fr;}.ts-cards{flex-wrap:wrap;}.ts-card{min-width:130px;}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="loginScreen">
+  <!-- LEFT PANEL -->
+  <div class="ls-left">
+    <div class="ls-blob-mid"></div>
+    <div class="ls-brand-wrap">
+      <div class="ls-year-badge">
+        <span class="ls-year-dot"></span>
+        FY 2026–27 · LIVE
+      </div>
+      <!-- ✅ FIXED: Logo with proper sizing -->
+      <div class="ls-logo-box">
+        <img src="https://lh3.googleusercontent.com/d/15l_vE2D1_9cDUuzucB-XllyF-sFmqa_x" alt="KSK Logo"/>
+      </div>
+    </div>
+    <div class="ls-headline">Factory<em><br>Sales Pro</em></div>
+    <div class="ls-tagline">Real-time sales analytics, monthly trends, and order management — all in one secure dashboard.</div>
+    <div class="ls-tags">
+      <span class="ls-tag"><span class="ls-tag-icon">📊</span> Google Sheets Sync</span>
+      <span class="ls-tag"><span class="ls-tag-icon">📈</span> Monthly Trends</span>
+      <span class="ls-tag"><span class="ls-tag-icon">⚡</span> Real-time</span>
+      <span class="ls-tag"><span class="ls-tag-icon">🔐</span> Secure Login</span>
+    </div>
+    <div class="ls-features">
+      <div class="ls-feat">
+        <div class="ls-feat-icon">📊</div>
+        <div class="ls-feat-text">Monthly revenue &amp; trend charts</div>
+      </div>
+      <div class="ls-feat">
+        <div class="ls-feat-icon">🔍</div>
+        <div class="ls-feat-text">Filter by division &amp; client type</div>
+      </div>
+      <div class="ls-feat">
+        <div class="ls-feat-icon">⚡</div>
+        <div class="ls-feat-text">Live GST &amp; value calculations</div>
+      </div>
+      <div class="ls-feat">
+        <div class="ls-feat-icon">📋</div>
+        <div class="ls-feat-text">Direct Google Sheets access</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="ls-right">
+    <div class="ls-secure-badge">🔒 SECURE LOGIN</div>
+    <div class="ls-welcome">Welcome Back 👋</div>
+    <div class="ls-sub">Enter your credentials to continue</div>
+    <div class="ls-field">
+      <label class="ls-label">Username</label>
+      <input class="ls-input" type="text" id="uname" placeholder="Enter your username" autocomplete="off"/>
+    </div>
+    <div class="ls-field">
+      <label class="ls-label">Password</label>
+      <input class="ls-input" type="password" id="upass" placeholder="Enter your password"/>
+    </div>
+    <button class="ls-btn" id="loginBtn" onclick="doLogin()">
+      <span class="btn-text">Sign In →</span>
+      <span class="ls-spinner"></span>
+    </button>
+    <div id="loginErr"></div>
+    <div class="ls-divider">
+      <span class="ls-divider-text">Secure Factory Dashboard</span>
+    </div>
+    <div class="ls-footer">Powered by <span>KSK Engineering</span> · 2026–27</div>
+  </div>
+</div>
+
+<!-- GLOBAL LOADER -->
+<div id="globalLoader" class="hide">
+  <div class="gl-ring"></div>
+  <div class="gl-text" id="loaderText">Loading Dashboard</div>
+  <div class="gl-sub" id="loaderSub">Fetching data from Google Sheets…</div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <div class="sb-logo">
+      <div class="brand">Factory<em>Pro</em></div>
+      <span class="yr">2026–27</span>
+    </div>
+    <div class="sb-section">Monthly Filter</div>
+    <div class="sb-months" id="monthNav"></div>
+    <div class="sb-user">
+      <div class="user-row">
+        <div class="u-ava" id="uAva">U</div>
+        <div>
+          <div class="u-name" id="uName">User</div>
+          <div class="u-role">Factory Manager</div>
+        </div>
+      </div>
+      <button class="logout-btn" onclick="doLogout()">⏻ &nbsp;Sign Out</button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="page-title">
+        Sales <em>Dashboard</em>
+        <small id="dataInfo">Loading…</small>
+      </div>
+
+      <!-- Refresh Button -->
+      <button class="refresh-btn" id="refreshBtn" onclick="refreshData()">
+        <span class="refresh-icon" id="refreshIcon">🔄</span> Refresh
+      </button>
+
+      <!-- Google Sheets Button -->
+      <a class="sheets-btn"
+         href="https://docs.google.com/spreadsheets/d/15FJeWIsSqd3w3nD1GaUAv4vHCbrbGbl_LaLmG032SG4/edit?gid=0#gid=0"
+         target="_blank" rel="noopener noreferrer">
+        <svg class="sheets-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="24" height="24" rx="4" fill="#0F9D58"/>
+          <rect x="5" y="8" width="14" height="1.5" rx="0.75" fill="white"/>
+          <rect x="5" y="11.25" width="14" height="1.5" rx="0.75" fill="white"/>
+          <rect x="5" y="14.5" width="14" height="1.5" rx="0.75" fill="white"/>
+          <rect x="8.5" y="6" width="1.5" height="12" rx="0.75" fill="white" opacity="0.5"/>
+          <rect x="14" y="6" width="1.5" height="12" rx="0.75" fill="white" opacity="0.5"/>
+        </svg>
+        Open Sheet
+      </a>
+
+      <div class="search-wrap">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input type="text" id="uSearch" placeholder="Search party, PO, division…" oninput="applyFilters()"/>
+      </div>
+    </div>
+
+    <!-- FILTER ROW -->
+    <div class="filter-row">
+      <div class="active-badge" id="activeBadge">📅 All Months</div>
+      <select class="fsel" id="divFilter" onchange="applyFilters()">
+        <option value="">All Divisions</option>
+      </select>
+      <select class="fsel" id="typeFilter" onchange="applyFilters()">
+        <option value="">All Client Types</option>
+        <option value="Pvt.">Private</option>
+        <option value="Govt.">Government</option>
+      </select>
+      <button class="clear-btn" onclick="clearFilters()">✕ Clear</button>
+    </div>
+
+    <!-- TOTAL SALES BANNER -->
+    <div class="ts-banner">
+      <div class="ts-title-box">
+        <div>
+          <div style="font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--blue4);margin-bottom:4px;">Summary</div>
+          <div style="font-family:'Outfit',sans-serif;font-size:18px;font-weight:900;color:var(--navy);line-height:1.15;">Total<br>Sales</div>
+          <div style="margin-top:6px;font-size:9px;font-weight:600;color:var(--muted);background:var(--blue9);border:1px solid var(--blue8);border-radius:5px;padding:2px 7px;display:inline-block;">FY 2026–27</div>
+        </div>
+      </div>
+      <div class="ts-cards">
+        <div class="ts-card tc-mt">
+          <div class="tc-label">Qty. (MT)</div>
+          <div class="tc-val" id="kMT">—</div>
+        </div>
+        <div class="ts-card tc-nos">
+          <div class="tc-label">Qty. (Nos.)</div>
+          <div class="tc-val" id="kNos">—</div>
+        </div>
+        <div class="ts-card tc-sets">
+          <div class="tc-label">Qty. (Sets)</div>
+          <div class="tc-val" id="kSets">—</div>
+        </div>
+        <div class="ts-card tc-basic">
+          <div class="tc-label">Basic Total</div>
+          <div class="tc-val" id="kBasic">—</div>
+        </div>
+        <div class="ts-card tc-total">
+          <div class="tc-label">Total Value <span style="font-size:9px;font-weight:600;opacity:0.7;">(+18% GST)</span></div>
+          <div class="tc-val" id="kTotal">—</div>
+          <div style="font-size:10px;margin-top:4px;color:#065f46;opacity:0.7;" id="kGstNote"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPI ROW 2 -->
+    <div class="kpi2-row">
+      <div class="kpi2">
+        <div class="kpi2-label">Unique Clients</div>
+        <div class="kpi2-val" id="kClients">—</div>
+        <div class="kpi2-sub">Distinct parties</div>
+        <div class="kpi2-ico" style="background:#eff6ff;">👥</div>
+      </div>
+      <div class="kpi2">
+        <div class="kpi2-label">Govt. Orders</div>
+        <div class="kpi2-val" id="kGovt">—</div>
+        <div class="kpi2-sub">Government clients</div>
+        <div class="kpi2-ico" style="background:#d1fae5;">🏛️</div>
+      </div>
+      <div class="kpi2">
+        <div class="kpi2-label">Pvt. Orders</div>
+        <div class="kpi2-val" id="kPvt">—</div>
+        <div class="kpi2-sub">Private clients</div>
+        <div class="kpi2-ico" style="background:#dbeafe;">🏢</div>
+      </div>
+    </div>
+
+    <!-- CHARTS -->
+    <div class="chart-row">
+      <div class="ccard">
+        <div class="ccard-title">Monthly Revenue Trend</div>
+        <canvas id="monthChart" height="130"></canvas>
+      </div>
+      <div class="ccard">
+        <div class="ccard-title">Division-wise Split</div>
+        <canvas id="divChart" height="130"></canvas>
+      </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="tcard">
+      <div class="tcard-top">
+        <div class="tcard-title">Order Details</div>
+        <div class="row-count" id="rowCount">— records</div>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Type</th>
+              <th>PO Date</th>
+              <th>PO Number</th>
+              <th>Client</th>
+              <th>Consignee</th>
+              <th>Division</th>
+              <th>Description</th>
+              <th>Qty</th>
+              <th>Unit</th>
+              <th>Basic Rate</th>
+              <th>Basic Total</th>
+              <th>Dispatch Date</th>
+            </tr>
+          </thead>
+          <tbody id="tBody"></tbody>
+        </table>
+      </div>
+      <div class="pag" id="pagBar"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================================================================
+   STATE
+   ================================================================ */
+var allData = [], filtered = [], curMonth = "", curPage = 1, PAGE_SIZE = 50;
+var monthChartObj = null, divChartObj = null;
+var MONTHS = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
+
+/* ================================================================
+   ENTER KEY on login
+   ================================================================ */
+document.addEventListener("keydown", function(e) {
+  if (e.key === "Enter" && !document.getElementById("loginScreen").classList.contains("hide")) {
+    doLogin();
+  }
+});
+
+/* ================================================================
+   LOGIN
+   ================================================================ */
+function doLogin() {
+  var u = document.getElementById("uname").value.trim();
+  var p = document.getElementById("upass").value.trim();
+  if (!u || !p) { showErr("Please enter username and password."); return; }
+  var btn = document.getElementById("loginBtn");
+  btn.classList.add("loading");
+  google.script.run
+    .withSuccessHandler(function(res) {
+      btn.classList.remove("loading");
+      if (res.success) {
+        document.getElementById("loginScreen").classList.add("hide");
+        document.getElementById("uAva").textContent = res.name[0].toUpperCase();
+        document.getElementById("uName").textContent = res.name;
+        setTimeout(function() {
+          document.getElementById("dashboard").classList.add("show");
+          fetchData();
+        }, 350);
+      } else {
+        showErr("❌ " + (res.message || "Invalid credentials"));
+      }
+    })
+    .withFailureHandler(function(e) {
+      btn.classList.remove("loading");
+      showErr("⚠️ " + e.message);
+    })
+    .validateLogin(u, p);
+}
+
+function showErr(msg) {
+  var e = document.getElementById("loginErr");
+  e.textContent = msg;
+  e.style.display = "block";
+}
+
+function doLogout() { location.reload(); }
+
+/* ================================================================
+   FETCH DATA
+   ================================================================ */
+function fetchData() {
+  showLoader("Loading Dashboard", "Fetching data from Google Sheets…");
+  google.script.run
+    .withSuccessHandler(function(res) {
+      hideLoader();
+      if (res.error) {
+        document.getElementById("tBody").innerHTML =
+          '<tr class="empty-row"><td colspan="13">⚠️ ' + res.error + '</td></tr>';
+        return;
+      }
+      allData = res.data || [];
+      buildMonthNav();
+      updateMonthCounts();
+      populateDivFilter();
+      applyFilters();
+      var now = new Date();
+      document.getElementById("dataInfo").textContent =
+        allData.length + " records · Last refreshed " +
+        now.toLocaleTimeString("en-IN", {hour:"2-digit", minute:"2-digit"});
+    })
+    .withFailureHandler(function(e) {
+      hideLoader();
+      document.getElementById("tBody").innerHTML =
+        '<tr class="empty-row"><td colspan="13">⚠️ ' + e.message + '</td></tr>';
+    })
+    .getSalesData();
+}
+
+/* Refresh button handler */
+function refreshData() {
+  var btn = document.getElementById("refreshBtn");
+  btn.classList.add("spinning");
+  btn.disabled = true;
+  showLoader("Refreshing Data", "Fetching latest data from Google Sheets…");
+  google.script.run
+    .withSuccessHandler(function(res) {
+      hideLoader();
+      btn.classList.remove("spinning");
+      btn.disabled = false;
+      if (res.error) { alert("Error: " + res.error); return; }
+      allData = res.data || [];
+      updateMonthCounts();
+      populateDivFilter();
+      applyFilters();
+      var now = new Date();
+      document.getElementById("dataInfo").textContent =
+        allData.length + " records · Refreshed " +
+        now.toLocaleTimeString("en-IN", {hour:"2-digit", minute:"2-digit"});
+    })
+    .withFailureHandler(function(e) {
+      hideLoader();
+      btn.classList.remove("spinning");
+      btn.disabled = false;
+      alert("Refresh failed: " + e.message);
+    })
+    .getSalesData();
+}
+
+function showLoader(title, sub) {
+  document.getElementById("loaderText").textContent = title;
+  document.getElementById("loaderSub").textContent = sub;
+  document.getElementById("globalLoader").classList.remove("hide");
+}
+function hideLoader() {
+  document.getElementById("globalLoader").classList.add("hide");
+}
+
+/* ================================================================
+   MONTH NAV
+   ================================================================ */
+function buildMonthNav() {
+  var nav = document.getElementById("monthNav");
+  nav.innerHTML = "";
+  var allBtn = _mbtn("All Months", "");
+  allBtn.classList.add("active");
+  nav.appendChild(allBtn);
+  MONTHS.forEach(function(m) { nav.appendChild(_mbtn(m, m)); });
+}
+
+function _mbtn(label, val) {
+  var b = document.createElement("button");
+  b.className = "mb";
+  b.dataset.month = val;
+  b.innerHTML = '<span class="dot"></span><span>' + label + '</span><span class="cnt" id="mc_' + val + '">0</span>';
+  b.onclick = function() { selectMonth(val, b); };
+  return b;
+}
+
+function selectMonth(m, el) {
+  curMonth = m;
+  curPage = 1;
+  document.querySelectorAll(".mb").forEach(function(b) { b.classList.remove("active"); });
+  el.classList.add("active");
+  document.getElementById("activeBadge").textContent = m ? "📅 " + m : "📅 All Months";
+  applyFilters();
+}
+
+function updateMonthCounts() {
+  var counts = {};
+  allData.forEach(function(r) { counts[r.month] = (counts[r.month] || 0) + 1; });
+  var el = document.getElementById("mc_");
+  if (el) el.textContent = allData.length;
+  MONTHS.forEach(function(m) {
+    var e = document.getElementById("mc_" + m);
+    if (e) e.textContent = counts[m] || 0;
+  });
+}
+
+/* ================================================================
+   FILTERS
+   ================================================================ */
+function applyFilters() {
+  var search = document.getElementById("uSearch").value.trim().toLowerCase();
+  var div = document.getElementById("divFilter").value;
+  var type = document.getElementById("typeFilter").value;
+  filtered = allData.filter(function(r) {
+    if (curMonth && r.month !== curMonth) return false;
+    if (div && r.division !== div) return false;
+    if (type && r.clientType !== type) return false;
+    if (search) {
+      var hay = [
+        r.clientType, r.poDate, r.poNo, r.client, r.consignee,
+        r.division, r.description, r.unit, r.month, r.dispatchDate
+      ].join(" ").toLowerCase();
+      if (hay.indexOf(search) === -1) return false;
+    }
+    return true;
+  });
+  curPage = 1;
+  renderKPIs();
+  renderCharts();
+  renderTable();
+}
+
+function clearFilters() {
+  document.getElementById("uSearch").value = "";
+  document.getElementById("divFilter").value = "";
+  document.getElementById("typeFilter").value = "";
+  curMonth = "";
+  curPage = 1;
+  document.querySelectorAll(".mb").forEach(function(b, i) { b.classList.toggle("active", i === 0); });
+  document.getElementById("activeBadge").textContent = "📅 All Months";
+  applyFilters();
+}
+
+function populateDivFilter() {
+  var divs = [];
+  allData.forEach(function(r) {
+    if (r.division && divs.indexOf(r.division) === -1) divs.push(r.division);
+  });
+  divs.sort();
+  var sel = document.getElementById("divFilter");
+  sel.innerHTML = '<option value="">All Divisions</option>';
+  divs.forEach(function(d) {
+    var o = document.createElement("option");
+    o.value = d; o.textContent = d;
+    sel.appendChild(o);
+  });
+}
+
+/* ================================================================
+   KPIs
+   ================================================================ */
+function fmtINR(n) {
+  if (n >= 10000000) return "₹" + (n / 10000000).toFixed(2) + "Cr";
+  if (n >= 100000) return "₹" + (n / 100000).toFixed(2) + "L";
+  if (n >= 1000) return "₹" + (n / 1000).toFixed(1) + "K";
+  return "₹" + n.toLocaleString("en-IN", {maximumFractionDigits: 2});
+}
+function fmtNum(n) {
+  return Number(n).toLocaleString("en-IN", {maximumFractionDigits: 2});
+}
+
+function renderKPIs() {
+  var qtyMT = 0, qtyNos = 0, qtySets = 0, basicTotal = 0, govt = 0, pvt = 0;
+  var uniqueClients = {};
+  filtered.forEach(function(r) {
+    var u = (r.unit || "").trim().toLowerCase();
+    var q = Number(r.qty) || 0;
+    if (u === "mt" || u === "m.t." || u === "mts") { qtyMT += q; }
+    else if (u === "sets" || u === "set") { qtySets += q; }
+    else { qtyNos += q; }
+    basicTotal += (Number(r.basicRate) || 0) * q;
+    if (r.client && r.client.trim()) uniqueClients[r.client.trim().toLowerCase()] = 1;
+    if (r.clientType === "Govt.") govt++;
+    else if (r.clientType === "Pvt.") pvt++;
+  });
+  var totalWithGST = basicTotal * 1.18;
+  var gstAmt = basicTotal * 0.18;
+  document.getElementById("kMT").textContent = fmtNum(qtyMT);
+  document.getElementById("kNos").textContent = fmtNum(qtyNos);
+  document.getElementById("kSets").textContent = fmtNum(qtySets);
+  document.getElementById("kBasic").textContent = fmtINR(basicTotal);
+  document.getElementById("kTotal").textContent = fmtINR(totalWithGST);
+  document.getElementById("kGstNote").textContent = "GST: " + fmtINR(gstAmt);
+  document.getElementById("kClients").textContent = Object.keys(uniqueClients).length.toLocaleString("en-IN");
+  document.getElementById("kGovt").textContent = govt.toLocaleString("en-IN");
+  document.getElementById("kPvt").textContent = pvt.toLocaleString("en-IN");
+  document.getElementById("rowCount").textContent = filtered.length + " records";
+}
+
+/* ================================================================
+   CHARTS
+   ================================================================ */
+var BPAL = ["#0d2347","#1a4080","#1d4ed8","#2563eb","#3b82f6","#60a5fa","#93c5fd","#bfdbfe","#0c4a6e","#075985","#0369a1","#0284c7"];
+
+function renderCharts() {
+  var mMap = {}; MONTHS.forEach(function(m) { mMap[m] = 0; });
+  filtered.forEach(function(r) {
+    if (r.month && mMap.hasOwnProperty(r.month)) {
+      mMap[r.month] += (Number(r.basicRate) || 0) * (Number(r.qty) || 0) * 1.18;
+    }
+  });
+  var mKeys = MONTHS.filter(function(m) { return mMap[m] > 0; });
+  var mVals = mKeys.map(function(m) { return mMap[m]; });
+
+  if (monthChartObj) monthChartObj.destroy();
+  var bCtx = document.getElementById("monthChart").getContext("2d");
+  var grad = bCtx.createLinearGradient(0, 0, 0, 200);
+  grad.addColorStop(0, "#2563eb"); grad.addColorStop(1, "#93c5fd");
+  monthChartObj = new Chart(bCtx, {
+    type: "bar",
+    data: { labels: mKeys, datasets: [{ data: mVals, backgroundColor: grad, borderRadius: 6, borderSkipped: false }] },
+    options: {
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(c) { return " " + fmtINR(c.raw); } } } },
+      scales: {
+        y: { ticks: { callback: function(v) { return fmtINR(v); }, font: { size: 9 } }, grid: { color: "#f0f4ff" } },
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+      },
+      animation: { duration: 500 }
+    }
+  });
+
+  var dMap = {};
+  filtered.forEach(function(r) {
+    if (r.division) dMap[r.division] = (dMap[r.division] || 0) + (Number(r.basicRate) || 0) * (Number(r.qty) || 0) * 1.18;
+  });
+  var dKeys = Object.keys(dMap).sort(function(a, b) { return dMap[b] - dMap[a]; });
+  var dVals = dKeys.map(function(k) { return dMap[k]; });
+  var total = dVals.reduce(function(a, b) { return a + b; }, 0);
+
+  if (divChartObj) divChartObj.destroy();
+  divChartObj = new Chart(document.getElementById("divChart").getContext("2d"), {
+    type: "doughnut",
+    data: {
+      labels: dKeys,
+      datasets: [{ data: dVals, backgroundColor: BPAL.slice(0, dKeys.length), borderWidth: 2, borderColor: "#fff", hoverOffset: 10 }]
+    },
+    options: {
+      plugins: {
+        legend: { position: "right", labels: { font: { size: 10 }, padding: 7, boxWidth: 10 } },
+        tooltip: { callbacks: { label: function(c) { var pct = (c.raw / total * 100).toFixed(1); return " " + c.label + ": " + pct + "%"; } } }
+      },
+      cutout: "55%",
+      animation: { duration: 500 }
+    }
+  });
+}
+
+/* ================================================================
+   ✅ FIXED: DATE FORMATTER
+   
+   Root cause of wrong years (2209, 6291 etc.):
+   The old formula used (serial - 25569) * 86400 * 1000 which is
+   UNIX timestamp math — correct ONLY when serial is a true Excel
+   serial number (days since 1 Jan 1900).
+   
+   BUT Google Apps Script's getValues() already returns JavaScript
+   Date objects for date cells. When those Dates are serialised to
+   JSON they come as ISO strings like "2026-07-08T00:00:00.000Z"
+   — NOT as raw Excel numbers. The old code was then mistakenly
+   re-applying the Excel-serial formula to the millisecond timestamp
+   (e.g. 1752019200000) producing absurd years.
+   
+   Fix strategy (handles ALL formats safely):
+   1. If value is already a JS Date / ISO string → parse directly.
+   2. If it looks like a small integer (≤ 60000) → treat as true
+      Excel serial and convert with the correct UTC offset.
+   3. If it's a large number (> 60000) → it's already a JS
+      timestamp in ms; just wrap in new Date().
+   4. If it's a formatted string (e.g. "30/03/2026", "8-Apr-2026")
+      → return as-is (already human-readable).
+   ================================================================ */
+var MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+function fmtDate(val) {
+  if (val === null || val === undefined || val === "") return "—";
+  var s = String(val).trim();
+  if (s === "" || s === "0") return "—";
+
+  // --- Case 1: ISO 8601 string from Apps Script Date serialisation ---
+  // e.g. "2026-07-08T00:00:00.000Z"  or  "2026-07-08"
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
+    var d = new Date(s);
+    if (!isNaN(d.getTime())) {
+      // Use UTC values to avoid timezone shift
+      return d.getUTCDate() + "-" + MONTH_NAMES[d.getUTCMonth()] + "-" + d.getUTCFullYear();
+    }
+  }
+
+  // --- Case 2: Pure numeric string ---
+  if (/^\d+(\.\d+)?$/.test(s)) {
+    var n = parseFloat(s);
+
+    // Small number (≤ 60000) → genuine Excel/Sheets serial date
+    // (days since 1 Jan 1900, with Excel's leap-year bug for ≤ 60)
+    if (n <= 60000) {
+      var excelEpoch = new Date(Date.UTC(1899, 11, 30)); // 30 Dec 1899
+      var d2 = new Date(excelEpoch.getTime() + n * 86400000);
+      if (!isNaN(d2.getTime())) {
+        return d2.getUTCDate() + "-" + MONTH_NAMES[d2.getUTCMonth()] + "-" + d2.getUTCFullYear();
+      }
+    }
+
+    // Large number → JavaScript timestamp in milliseconds
+    if (n > 60000) {
+      var d3 = new Date(n);
+      if (!isNaN(d3.getTime())) {
+        return d3.getUTCDate() + "-" + MONTH_NAMES[d3.getUTCMonth()] + "-" + d3.getUTCFullYear();
+      }
+    }
+  }
+
+  // --- Case 3: Already a human-readable string → return as-is ---
+  // e.g. "30/03/2026", "8-Apr-2026", "01.04.2026"
+  return s;
+}
+
+/* ================================================================
+   TABLE RENDER
+   ================================================================ */
+function renderTable() {
+  var start = (curPage - 1) * PAGE_SIZE;
+  var page = filtered.slice(start, start + PAGE_SIZE);
+  var tb = document.getElementById("tBody");
+
+  if (!page.length) {
+    tb.innerHTML = '<tr class="empty-row"><td colspan="13">No records found.</td></tr>';
+    document.getElementById("pagBar").innerHTML = "";
+    return;
+  }
+
+  tb.innerHTML = page.map(function(r, i) {
+    var idx = start + i + 1;
+    var qty = Number(r.qty) || 0;
+    var basicRate = Number(r.basicRate) || 0;
+    var basicTotal = basicRate * qty;
+    var dispDate = r.dispatchDate || "";
+
+    return '<tr>' +
+      '<td>' + idx + '</td>' +
+      '<td><span class="badge ' + (r.clientType === "Govt." ? "bg-govt" : "bg-pvt") + '">' + (r.clientType || "—") + '</span></td>' +
+      '<td>' + (r.poDate || "—") + '</td>' +
+      '<td class="po-cell">' + (r.poNo || "—") + '</td>' +
+      '<td>' + (r.client || "—") + '</td>' +
+      '<td>' + (r.consignee || "—") + '</td>' +
+      '<td>' + (r.division || "—") + '</td>' +
+      '<td>' + (r.description || "—") + '</td>' +
+      '<td style="font-weight:600;">' + fmtNum(qty) + '</td>' +
+      '<td>' + (r.unit || "—") + '</td>' +
+      '<td style="font-weight:600;">₹' + fmtNum(basicRate) + '</td>' +
+      '<td class="val-cell">' + fmtINR(basicTotal) + '</td>' +
+      '<td class="date-cell">' + dispDate + '</td>' +
+    '</tr>';
+  }).join("");
+
+  renderPagination();
+}
+
+function renderPagination() {
+  var tp = Math.ceil(filtered.length / PAGE_SIZE);
+  if (tp <= 1) { document.getElementById("pagBar").innerHTML = ""; return; }
+  var s = (curPage - 1) * PAGE_SIZE + 1;
+  var e = Math.min(curPage * PAGE_SIZE, filtered.length);
+  var h = '<div class="pag-info">Showing ' + s + '–' + e + ' of ' + filtered.length + '</div><div class="pag-btns">';
+  h += '<button class="pg-btn" onclick="goPage(' + (curPage - 1) + ')" ' + (curPage === 1 ? "disabled" : "") + '>‹ Prev</button>';
+  var st = Math.max(1, curPage - 2), en = Math.min(tp, curPage + 2);
+  for (var p = st; p <= en; p++) {
+    h += '<button class="pg-btn' + (p === curPage ? " active" : "") + '" onclick="goPage(' + p + ')">' + p + '</button>';
+  }
+  h += '<button class="pg-btn" onclick="goPage(' + (curPage + 1) + ')" ' + (curPage === tp ? "disabled" : "") + '>Next ›</button></div>';
+  document.getElementById("pagBar").innerHTML = h;
+}
+
+function goPage(p) {
+  var tp = Math.ceil(filtered.length / PAGE_SIZE);
+  if (p < 1 || p > tp) return;
+  curPage = p;
+  renderTable();
+  document.querySelector(".tcard").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+</script>
+</body>
+</html>
