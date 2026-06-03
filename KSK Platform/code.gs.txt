@@ -1,0 +1,60 @@
+// ============================================================
+//  KSK ONE APP — Google Apps Script (Code.gs)
+//  Sheet: "Apps"  |  Columns: A=Name  B=URL  C=Category  D=Icon  E=Description  F=Tag
+// ============================================================
+
+var SHEET_NAME = "Apps";
+
+// ── Serve the HTML dashboard ──────────────────────────────────
+function doGet() {
+  return HtmlService
+    .createHtmlOutputFromFile("index")
+    .setTitle("KSK One App — Operations Dashboard")
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+// ── Called by the dashboard JS via google.script.run ─────────
+function getApps() {
+  try {
+    var ss    = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheetByName(SHEET_NAME);
+
+    if (!sheet) {
+      return { success: false, error: 'Sheet "' + SHEET_NAME + '" not found. Please create it first.' };
+    }
+
+    var lastRow = sheet.getLastRow();
+
+    // No data rows yet (only header or completely empty)
+    if (lastRow < 2) {
+      return { success: true, apps: [] };
+    }
+
+    // Read from row 2 (skip header row 1) — columns A–F
+    var data = sheet.getRange(2, 1, lastRow - 1, 6).getValues();
+
+    var apps = [];
+    for (var i = 0; i < data.length; i++) {
+      var row = data[i];
+      var name = String(row[0] || "").trim();
+      var url  = String(row[1] || "").trim();
+
+      // Skip rows where Name or URL is empty
+      if (!name || !url) continue;
+
+      apps.push({
+        name : name,
+        url  : url,
+        cat  : String(row[2] || "General").trim(),
+        icon : String(row[3] || "🔗").trim(),
+        desc : String(row[4] || "").trim(),
+        tag  : String(row[5] || "").trim()
+      });
+    }
+
+    return { success: true, apps: apps };
+
+  } catch (e) {
+    return { success: false, error: e.message };
+  }
+}
