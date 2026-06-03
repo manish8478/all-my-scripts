@@ -1,0 +1,1994 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Supply Management System</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif;}
+:root{
+  --primary:#667eea;--primary-dark:#4f5fc7;--primary-light:#7c8ef0;
+  --accent:#10b981;--red:#ef4444;--orange:#f59e0b;--blue:#3b82f6;
+  --green:#10b981;--green-dark:#065f46;
+  --bg:#f0f2ff;--white:#ffffff;
+  --g100:#f5f6ff;--g200:#e0e3f5;--g400:#8b90b8;--g600:#4a5080;--g900:#1a1d3a;
+  --shadow:0 2px 16px rgba(102,126,234,.10);
+}
+body{background:var(--bg);color:var(--g900);min-height:100vh;}
+
+/* LOGIN */
+#loginPage{display:flex;min-height:100vh;background:linear-gradient(135deg,#4f5fc7 0%,#667eea 55%,#7c8ef0 100%);position:relative;overflow:hidden;}
+#loginPage::before{content:'';position:absolute;width:700px;height:700px;border-radius:50%;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);top:-260px;right:-180px;}
+#loginPage::after{content:'';position:absolute;width:450px;height:450px;border-radius:50%;background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.1);bottom:-120px;left:-100px;}
+.lft{flex:1;display:flex;flex-direction:column;justify-content:center;padding:60px 80px;position:relative;z-index:1;}
+.lft-brand{font-size:12px;font-weight:700;color:rgba(255,255,255,.5);letter-spacing:4px;text-transform:uppercase;margin-bottom:48px;}
+.lft-headline{font-size:clamp(32px,4vw,52px);font-weight:900;color:#fff;line-height:1.15;margin-bottom:18px;}
+.lft-headline span{color:#a5f3d0;}
+.lft-sub{font-size:15px;color:rgba(255,255,255,.55);max-width:360px;line-height:1.75;}
+.lft-pills{display:flex;gap:12px;margin-top:48px;flex-wrap:wrap;}
+.pill{padding:8px 16px;border-radius:20px;font-size:12px;font-weight:600;background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.15);}
+.rgt{width:460px;background:var(--white);display:flex;align-items:center;justify-content:center;padding:60px 50px;position:relative;z-index:1;box-shadow:-20px 0 60px rgba(0,0,0,.18);}
+.rgt-inner{width:100%;}
+.form-tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--primary);background:#eef0ff;padding:5px 12px;border-radius:20px;margin-bottom:20px;}
+.login-title{font-size:26px;font-weight:900;color:var(--g900);margin-bottom:6px;}
+.login-sub{font-size:14px;color:var(--g400);margin-bottom:36px;}
+.fgroup{margin-bottom:18px;}
+.fgroup label{display:block;font-size:11px;font-weight:700;color:var(--g600);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;}
+.fgroup input{width:100%;padding:13px 16px;border:2px solid var(--g200);border-radius:10px;font-size:14px;color:var(--g900);background:var(--g100);outline:none;transition:.2s;}
+.fgroup input:focus{border-color:var(--primary);background:#fff;box-shadow:0 0 0 4px rgba(102,126,234,.08);}
+.login-err{display:none;background:#fff2f2;border:1px solid #ffc8c8;color:var(--red);padding:11px 15px;border-radius:8px;font-size:13px;margin-bottom:18px;}
+.btn-login{width:100%;padding:14px;background:linear-gradient(135deg,var(--primary-dark),var(--primary-light));color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;transition:.25s;margin-top:4px;}
+.btn-login:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(102,126,234,.35);}
+.btn-login:disabled{opacity:.6;cursor:not-allowed;transform:none;}
+
+/* APP */
+#app{display:none;min-height:100vh;}
+.sidebar{position:fixed;left:0;top:0;width:240px;height:100vh;background:linear-gradient(180deg,#4f5fc7 0%,#667eea 100%);display:flex;flex-direction:column;z-index:200;box-shadow:3px 0 20px rgba(0,0,0,.15);}
+.sb-logo{padding:26px 22px 18px;border-bottom:1px solid rgba(255,255,255,.1);}
+.sb-logo-name{font-size:20px;font-weight:900;color:#fff;}
+.sb-logo-name span{color:#a5f3d0;}
+.sb-logo-sub{font-size:10px;color:rgba(255,255,255,.38);letter-spacing:2px;margin-top:2px;}
+.sb-nav{flex:1;padding:18px 10px;overflow-y:auto;}
+.sb-section{font-size:10px;font-weight:700;color:rgba(255,255,255,.3);letter-spacing:2px;text-transform:uppercase;padding:0 12px;margin:16px 0 6px;}
+.sb-item{display:flex;align-items:center;gap:11px;padding:11px 14px;border-radius:10px;cursor:pointer;transition:.2s;color:rgba(255,255,255,.58);font-size:14px;font-weight:600;margin-bottom:2px;position:relative;user-select:none;}
+.sb-item:hover{background:rgba(255,255,255,.1);color:#fff;}
+.sb-item.active{background:rgba(255,255,255,.14);color:#fff;}
+.sb-item.active::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:22px;background:#a5f3d0;border-radius:0 3px 3px 0;}
+.sb-ico{font-size:17px;width:22px;text-align:center;}
+.sb-badge{margin-left:auto;background:#a5f3d0;color:#4f5fc7;font-size:10px;font-weight:800;padding:2px 7px;border-radius:10px;}
+.sb-badge.green{background:#a5f3d0;color:#065f46;}
+.sb-bottom{padding:14px 10px;border-top:1px solid rgba(255,255,255,.1);}
+.user-card{display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.08);margin-bottom:8px;}
+.u-avatar{width:34px;height:34px;border-radius:8px;background:#a5f3d0;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:15px;color:#4f5fc7;flex-shrink:0;}
+.u-name{font-size:13px;font-weight:700;color:#fff;}
+.u-role{font-size:10px;color:rgba(255,255,255,.38);}
+.btn-logout{width:100%;padding:9px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:8px;color:rgba(255,255,255,.45);font-size:12px;cursor:pointer;transition:.2s;}
+.btn-logout:hover{background:rgba(200,40,40,.18);color:#ff9090;border-color:rgba(200,40,40,.3);}
+
+/* CONTENT */
+.content{margin-left:240px;min-height:100vh;padding:30px 34px;}
+.page{display:none;}.page.active{display:block;}
+.pg-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:16px;}
+.pg-title{font-size:22px;font-weight:900;color:var(--g900);}
+.pg-sub{font-size:13px;color:var(--g400);margin-top:3px;}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-bottom:26px;}
+.stat-card{background:#fff;border-radius:14px;padding:20px 22px;box-shadow:var(--shadow);border:1px solid var(--g200);position:relative;overflow:hidden;transition:transform .2s;}
+.stat-card:hover{transform:translateY(-2px);}
+.stat-card::after{content:'';position:absolute;top:0;left:0;width:4px;height:100%;}
+.stat-card.c1::after{background:var(--primary);}
+.stat-card.c2::after{background:var(--accent);}
+.stat-card.c3::after{background:var(--orange);}
+.stat-card.c4::after{background:var(--blue);}
+.sc-label{font-size:11px;font-weight:700;color:var(--g400);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;}
+.sc-val{font-size:34px;font-weight:900;color:var(--g900);line-height:1;}
+.sc-ico{position:absolute;top:18px;right:18px;font-size:26px;opacity:.1;}
+
+/* FILTERS */
+.filters-card{background:#fff;border-radius:14px;padding:20px 24px;box-shadow:var(--shadow);border:1px solid var(--g200);margin-bottom:24px;}
+.filters-title{font-size:14px;font-weight:700;color:var(--g900);margin-bottom:16px;}
+.filters-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;}
+.filter-group{display:flex;flex-direction:column;gap:6px;}
+.filter-label{font-size:11px;font-weight:700;color:var(--g600);letter-spacing:.5px;text-transform:uppercase;}
+.filter-select,.filter-input{padding:9px 12px;border:1.5px solid var(--g200);border-radius:8px;font-size:13px;outline:none;background:var(--g100);transition:.2s;cursor:pointer;}
+.filter-select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%234a5080'%3E%3Cpath d='M7 10l5 5 5-5H7z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;background-size:18px;padding-right:28px;}
+.filter-select:focus,.filter-input:focus{border-color:var(--primary);background:#fff;}
+.filter-select:disabled{opacity:.45;cursor:not-allowed;background:var(--g200);}
+.filter-actions{display:flex;gap:10px;margin-top:16px;}
+.btn-filter{padding:9px 20px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;transition:.2s;}
+.btn-filter:hover{background:var(--primary-dark);}
+.btn-reset{padding:9px 20px;background:var(--g200);color:var(--g600);border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;transition:.2s;}
+.btn-reset:hover{background:var(--g400);color:#fff;}
+
+/* CHARTS */
+.charts-row{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;margin-bottom:24px;}
+.chart-card{background:#fff;border-radius:14px;padding:24px;box-shadow:var(--shadow);border:1px solid var(--g200);}
+.chart-card.full{grid-column:1/-1;}
+.chart-title{font-size:14px;font-weight:700;color:var(--g900);margin-bottom:16px;}
+.chart-wrap{position:relative;height:280px;}
+.chart-wrap.tall{height:320px;}
+
+/* TABLE */
+.tcard{background:#fff;border-radius:14px;box-shadow:var(--shadow);border:1px solid var(--g200);overflow:hidden;margin-bottom:24px;}
+.tcard-head{padding:18px 22px;border-bottom:1px solid var(--g200);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.tcard-title{font-size:15px;font-weight:700;color:var(--g900);}
+.tcard-right{display:flex;align-items:center;gap:10px;}
+.search-inp{padding:8px 14px;border:1.5px solid var(--g200);border-radius:8px;font-size:13px;outline:none;width:200px;transition:.2s;}
+.search-inp:focus{border-color:var(--primary);}
+.btn-refresh{padding:8px 14px;border:1.5px solid var(--g200);border-radius:8px;background:#fff;font-size:13px;cursor:pointer;transition:.2s;color:var(--g600);font-weight:600;}
+.btn-refresh:hover{border-color:var(--primary);color:var(--primary);}
+.count-badge{font-size:12px;color:var(--g400);}
+.tbl-wrap{overflow-x:auto;overflow-y:auto;max-height:520px;position:relative;}
+.dtable{width:100%;border-collapse:collapse;}
+.dtable th{background:#f0f2ff;padding:11px 14px;text-align:left;font-size:11px;font-weight:700;color:var(--primary-dark);letter-spacing:1px;text-transform:uppercase;border-bottom:2px solid var(--g200);white-space:nowrap;position:sticky;top:0;z-index:10;box-shadow:0 2px 4px rgba(102,126,234,.08);}
+.dtable td{padding:12px 14px;border-bottom:1px solid var(--g200);font-size:13px;color:var(--g900);vertical-align:middle;}
+.dtable tr:last-child td{border-bottom:none;}
+.dtable tbody tr:hover{background:#f8f9ff;}
+
+/* COMPLETED TABLE — green theme */
+.dtable.completed-tbl th{background:#f0fff8;color:#065f46;box-shadow:0 2px 4px rgba(16,185,129,.08);}
+.dtable.completed-tbl tbody tr:hover{background:#f0fff8;}
+.completed-badge{display:inline-flex;align-items:center;gap:5px;background:#d1fae5;color:#065f46;border:1px solid #6ee7b7;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800;letter-spacing:.5px;}
+
+.empty-state{text-align:center;padding:56px 20px;color:var(--g400);}
+.empty-icon{font-size:44px;opacity:.35;margin-bottom:10px;}
+
+/* PO Product column — truncate, expand on hover */
+.dtable th.col-po-product,
+.dtable td.col-po-product{min-width:160px;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:default;transition:background .15s;}
+.dtable td.col-po-product:hover{white-space:normal;overflow:visible;word-break:break-word;background:#eef0ff;position:relative;z-index:5;box-shadow:0 4px 16px rgba(102,126,234,.18);border-radius:6px;min-width:260px;max-width:420px;}
+
+/* SUPPLY FORM */
+.form-card{background:#fff;border-radius:16px;padding:32px 36px;box-shadow:var(--shadow);border:1px solid var(--g200);max-width:750px;}
+.form-title{font-size:18px;font-weight:900;color:var(--g900);margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--g200);}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:20px;}
+.mf{display:flex;flex-direction:column;gap:7px;}
+.mf.full{grid-column:1/-1;}
+.mf label{font-size:11px;font-weight:700;color:var(--g600);letter-spacing:1px;text-transform:uppercase;}
+.mf select,.mf input{padding:11px 13px;border:1.5px solid var(--g200);border-radius:9px;font-size:14px;color:var(--g900);background:var(--g100);outline:none;transition:.2s;width:100%;}
+.mf select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%234a5080'%3E%3Cpath d='M7 10l5 5 5-5H7z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;background-size:18px;padding-right:32px;cursor:pointer;}
+.mf select:focus,.mf input:focus{border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px rgba(102,126,234,.08);}
+.btn-submit{padding:12px 32px;background:linear-gradient(135deg,var(--primary-dark),var(--primary-light));border:none;border-radius:9px;font-size:14px;font-weight:700;color:#fff;cursor:pointer;transition:.25s;}
+.btn-submit:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(102,126,234,.3);}
+.btn-submit:disabled{opacity:.6;cursor:not-allowed;transform:none;}
+
+/* TOAST */
+.toast{position:fixed;bottom:28px;right:28px;padding:13px 20px;border-radius:12px;color:#fff;font-weight:700;font-size:14px;display:flex;align-items:center;gap:9px;box-shadow:0 8px 28px rgba(0,0,0,.2);z-index:9999;transform:translateY(70px);opacity:0;transition:all .35s cubic-bezier(.34,1.56,.64,1);}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.success{background:var(--accent);}
+.toast.error{background:var(--red);}
+.toast.info{background:var(--blue);}
+.loading-bar{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,#a5f3d0,var(--primary-light));z-index:9999;transition:width .4s;}
+
+@media(max-width:900px){
+  .sidebar{width:56px;}
+  .sb-logo-name,.sb-logo-sub,.sb-section,.sb-item>span:not(.sb-ico),.sb-badge,.u-name,.u-role,.btn-logout{display:none;}
+  .content{margin-left:56px;padding:20px;}
+  .stats-row{grid-template-columns:repeat(2,1fr);}
+  .charts-row{grid-template-columns:1fr;}
+  .lft{display:none;}.rgt{width:100%;}
+  .form-grid{grid-template-columns:1fr;}
+}
+
+/* DASHBOARD SECTION HEADERS */
+.dash-section-head{background:linear-gradient(135deg,var(--primary-dark),var(--primary-light));color:#fff;font-size:14px;font-weight:800;padding:12px 22px;border-radius:12px;margin:28px 0 16px;letter-spacing:.5px;}
+.dash-section-head span{display:flex;align-items:center;gap:8px;}
+
+/* DASHBOARD FILTER BAR */
+.dash-filter-bar{display:flex;align-items:center;gap:24px;flex-wrap:wrap;background:#fff;border:1px solid var(--g200);border-radius:12px;padding:16px 22px;margin-bottom:16px;box-shadow:var(--shadow);}
+.dfb-group{display:flex;flex-direction:column;gap:6px;}
+.dfb-stat{margin-left:auto;background:linear-gradient(135deg,#eef0ff,#f5f6ff);border:1.5px solid var(--primary-light);border-radius:10px;padding:10px 18px;font-size:13px;color:var(--g600);}
+.dfb-stat strong{font-size:16px;color:var(--primary-dark);margin-left:6px;}
+
+/* TABLE number align */
+.dtable td.num{text-align:right;font-variant-numeric:tabular-nums;}
+.dtable td.val-cell{text-align:right;font-weight:700;color:var(--primary-dark);font-variant-numeric:tabular-nums;}
+.dtable td.cat-badge{font-size:11px;font-weight:700;background:#eef0ff;color:var(--primary-dark);padding:3px 9px;border-radius:20px;display:inline-block;}
+
+/* ── NEW PO FORM ── */
+.npo-card{background:#fff;border-radius:20px;box-shadow:0 4px 32px rgba(102,126,234,.13);border:1px solid var(--g200);overflow:hidden;max-width:860px;}
+.npo-header{background:linear-gradient(135deg,#4f5fc7 0%,#667eea 60%,#7c8ef0 100%);padding:28px 36px 24px;position:relative;overflow:hidden;}
+.npo-header::before{content:'';position:absolute;width:300px;height:300px;border-radius:50%;background:rgba(255,255,255,.04);top:-120px;right:-80px;}
+.npo-header::after{content:'';position:absolute;width:160px;height:160px;border-radius:50%;background:rgba(165,243,208,.06);bottom:-60px;left:40px;}
+.npo-header-icon{font-size:36px;margin-bottom:10px;position:relative;z-index:1;}
+.npo-header-title{font-size:22px;font-weight:900;color:#fff;margin-bottom:4px;position:relative;z-index:1;}
+.npo-header-sub{font-size:13px;color:rgba(255,255,255,.55);position:relative;z-index:1;}
+.npo-body{padding:32px 36px;}
+.npo-section{margin-bottom:28px;}
+.npo-section-label{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:800;color:var(--primary-dark);letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #eef0ff;}
+.npo-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.npo-grid.g3{grid-template-columns:1fr 1fr 1fr;}
+.npo-grid.g1{grid-column:1/-1;}
+.nf{display:flex;flex-direction:column;gap:7px;}
+.nf.span2{grid-column:span 2;}
+.nf label{font-size:11px;font-weight:700;color:var(--g600);letter-spacing:.8px;text-transform:uppercase;}
+.nf input,.nf select{padding:11px 14px;border:1.5px solid var(--g200);border-radius:10px;font-size:14px;color:var(--g900);background:var(--g100);outline:none;transition:.2s;width:100%;}
+.nf select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%234a5080'%3E%3Cpath d='M7 10l5 5 5-5H7z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;background-size:18px;padding-right:32px;cursor:pointer;}
+.nf input:focus,.nf select:focus{border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px rgba(102,126,234,.09);}
+.nf .req{color:var(--red);margin-left:2px;}
+.npo-footer{padding:0 36px 32px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.btn-npo-submit{padding:13px 36px;background:linear-gradient(135deg,#4f5fc7,#7c8ef0);border:none;border-radius:11px;font-size:15px;font-weight:800;color:#fff;cursor:pointer;transition:.25s;display:flex;align-items:center;gap:8px;box-shadow:0 4px 16px rgba(102,126,234,.25);}
+.btn-npo-submit:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(102,126,234,.38);}
+.btn-npo-submit:disabled{opacity:.6;cursor:not-allowed;transform:none;}
+.btn-npo-reset{padding:13px 24px;background:var(--g200);border:none;border-radius:11px;font-size:14px;font-weight:700;color:var(--g600);cursor:pointer;transition:.2s;}
+.btn-npo-reset:hover{background:var(--g400);color:#fff;}
+.npo-required-note{font-size:12px;color:var(--g400);margin-left:auto;}
+.npo-divider{height:1px;background:linear-gradient(90deg,var(--primary-light),transparent);margin:4px 0 20px;}
+/* ── ITEM CARDS inside New PO form ── */
+.npo-item-card{background:linear-gradient(135deg,#f8f9ff 0%,#eef0ff 100%);border:1.5px solid #d0d5f5;border-radius:14px;padding:20px 22px;margin-bottom:16px;position:relative;transition:.2s;}
+.npo-item-card:hover{border-color:var(--primary-light);box-shadow:0 2px 12px rgba(102,126,234,.10);}
+.npo-item-card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.npo-item-num{font-size:12px;font-weight:800;color:var(--primary-dark);background:#e0e3ff;padding:4px 12px;border-radius:20px;letter-spacing:.5px;}
+.btn-remove-item{background:#fff0f0;border:1.5px solid #ffc8c8;color:var(--red);border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;transition:.2s;}
+.btn-remove-item:hover{background:var(--red);color:#fff;}
+.btn-add-item{width:100%;padding:13px;background:linear-gradient(135deg,#eef0ff,#f5f6ff);border:2px dashed #a5aef5;border-radius:12px;font-size:14px;font-weight:700;color:var(--primary);cursor:pointer;transition:.2s;margin-top:6px;letter-spacing:.3px;}
+.btn-add-item:hover{background:linear-gradient(135deg,#e0e3ff,#eef0ff);border-color:var(--primary);box-shadow:0 2px 12px rgba(102,126,234,.12);}
+
+/* ── COMPLETED ORDERS PAGE ── */
+.completed-header-banner{background:linear-gradient(135deg,#065f46 0%,#10b981 60%,#34d399 100%);border-radius:16px;padding:22px 28px;margin-bottom:24px;display:flex;align-items:center;gap:18px;position:relative;overflow:hidden;}
+.completed-header-banner::after{content:'✅';position:absolute;right:28px;font-size:56px;opacity:.15;}
+.chb-icon{font-size:38px;}
+.chb-title{font-size:20px;font-weight:900;color:#fff;}
+.chb-sub{font-size:13px;color:rgba(255,255,255,.6);margin-top:3px;}
+.chb-stat{margin-left:auto;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:12px 20px;text-align:center;min-width:100px;}
+.chb-stat-val{font-size:28px;font-weight:900;color:#fff;}
+.chb-stat-label{font-size:11px;color:rgba(255,255,255,.55);margin-top:2px;}
+
+/* completed page green filter card */
+.filters-card.green-theme{border-color:#a7f3d0;}
+.filters-card.green-theme .filters-title{color:#065f46;}
+.btn-filter.green{background:var(--green);color:#fff;}
+.btn-filter.green:hover{background:var(--green-dark);}
+</style>
+</head>
+<body>
+
+<div class="loading-bar" id="loadingBar"></div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  LOGIN PAGE                                                -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="loginPage">
+  <div class="lft">
+    <div class="lft-brand">Supply Management System</div>
+    <div class="lft-headline">Track &amp; Manage<br><span>Supply Orders</span></div>
+    <div class="lft-sub">Monitor pending orders, record supplies, and view real-time analytics — all synced with Google Sheets.</div>
+    <div class="lft-pills">
+      <span class="pill">📦 Pending Orders</span>
+      <span class="pill">✅ Supply Tracking</span>
+      <span class="pill">🏁 Completed Orders</span>
+      <span class="pill">📊 Analytics</span>
+    </div>
+  </div>
+  <div class="rgt">
+    <div class="rgt-inner">
+      <div class="form-tag">SECURE LOGIN</div>
+      <div class="login-title">Welcome Back 👋</div>
+      <div class="login-sub">Enter your credentials to continue</div>
+      <div class="login-err" id="loginErr"></div>
+      <div class="fgroup">
+        <label>Username</label>
+        <input type="text" id="loginUser" placeholder="Enter username" autocomplete="username"/>
+      </div>
+      <div class="fgroup">
+        <label>Password</label>
+        <input type="password" id="loginPass" placeholder="Enter password" autocomplete="current-password"/>
+      </div>
+      <button class="btn-login" id="loginBtn" onclick="doLogin()">Sign In →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  MAIN APP                                                  -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="app">
+  <aside class="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-name">Supply<span>Pro</span></div>
+      <div class="sb-logo-sub">MANAGEMENT SYSTEM</div>
+    </div>
+    <nav class="sb-nav">
+      <div class="sb-section">Main</div>
+      <div class="sb-item active" id="nav-pending" onclick="showPage('pending')">
+        <span class="sb-ico">⏳</span><span>Pending Orders</span>
+        <span class="sb-badge" id="pendingBadge">0</span>
+      </div>
+      <div class="sb-item" id="nav-supplied" onclick="showPage('supplied')">
+        <span class="sb-ico">✅</span><span>Supplied Items</span>
+        <span class="sb-badge" id="suppliedBadge">0</span>
+      </div>
+      <div class="sb-item" id="nav-dashboard" onclick="showPage('dashboard')">
+        <span class="sb-ico">📊</span><span>Dashboard</span>
+      </div>
+      <div class="sb-section">Actions</div>
+      <div class="sb-item" id="nav-form" onclick="showPage('form')">
+        <span class="sb-ico">➕</span><span>Supply Entry</span>
+      </div>
+      <div class="sb-item" id="nav-newpo" onclick="showPage('newpo')">
+        <span class="sb-ico">📝</span><span>Entry New PO</span>
+      </div>
+      <div class="sb-item" id="nav-completed" onclick="showPage('completed')" style="margin-top:10px;border-top:1px solid rgba(255,255,255,.08);padding-top:14px;">
+        <span class="sb-ico">🏁</span><span>Completed Orders</span>
+        <span class="sb-badge green" id="completedBadge">0</span>
+      </div>
+    </nav>
+    <div class="sb-bottom">
+      <div class="user-card">
+        <div class="u-avatar" id="userAvatar">U</div>
+        <div><div class="u-name" id="userName">User</div><div class="u-role">Manager</div></div>
+      </div>
+      <button class="btn-logout" onclick="doLogout()">🚪 Sign Out</button>
+    </div>
+  </aside>
+
+  <main class="content">
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!--  PAGE: PENDING ORDERS  ← BUG FIX: wrapper div added  -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <div class="page active" id="page-pending">
+      <div class="pg-header">
+        <div>
+          <div class="pg-title">Pending Orders</div>
+          <div class="pg-sub">Unfulfilled purchase orders — balance quantity &gt; 0</div>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button class="btn-refresh" onclick="window.open('https://docs.google.com/spreadsheets/d/15JuklGGUc98gJtxuH5JBAXyTdMti7Bd5egqWKRb3mBg/edit?gid=2049648028#gid=2049648028','_blank')" style="background:#10b981;color:#fff;border:none;font-weight:700;">
+            🔗 Open Sheet
+          </button>
+          <button class="btn-refresh" onclick="loadPendingData()">🔄 Refresh</button>
+        </div>
+      </div>
+      <div class="filters-card">
+        <div class="filters-title">🔍 Filter Pending Orders</div>
+        <div class="filters-grid">
+          <div class="filter-group">
+            <label class="filter-label">PO No</label>
+            <select class="filter-select" id="pendingFilterPONo" onchange="onPendingPOChange()">
+              <option value="">All PO Numbers</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label class="filter-label">Consignee</label>
+            <select class="filter-select" id="pendingFilterConsignee">
+              <option value="">All Consignees</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label class="filter-label">Category</label>
+            <select class="filter-select" id="pendingFilterCategory">
+              <option value="">All Categories</option>
+            </select>
+          </div>
+        </div>
+        <div class="filter-actions">
+          <button class="btn-filter" onclick="applyPendingFilters()">Apply Filters</button>
+          <button class="btn-reset" onclick="resetPendingFilters()">Reset</button>
+        </div>
+      </div>
+      <div class="tcard">
+        <div class="tcard-head">
+          <div class="tcard-title">Pending Items</div>
+          <div class="tcard-right">
+            <span class="count-badge" id="pendingCount">0 items</span>
+          </div>
+        </div>
+        <div class="tbl-wrap">
+          <table class="dtable">
+            <thead id="pendingTableHead"></thead>
+            <tbody id="pendingTableBody">
+              <tr><td colspan="10"><div class="empty-state"><div class="empty-icon">⏳</div>Loading...</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div><!-- end page-pending -->
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!--  PAGE: COMPLETED ORDERS                               -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <div class="page" id="page-completed">
+      <div class="pg-header">
+        <div>
+          <div class="pg-title">Completed Orders</div>
+          <div class="pg-sub">Orders where balance quantity has reached 0</div>
+        </div>
+        <button class="btn-refresh" onclick="loadCompletedData()">🔄 Refresh</button>
+      </div>
+
+      <div class="completed-header-banner">
+        <div class="chb-icon">🏁</div>
+        <div>
+          <div class="chb-title">Fully Fulfilled Orders</div>
+          <div class="chb-sub">These PO items have been completely supplied — Balance Qty = 0</div>
+        </div>
+        <div class="chb-stat">
+          <div class="chb-stat-val" id="completedStatCount">—</div>
+          <div class="chb-stat-label">Completed Items</div>
+        </div>
+      </div>
+
+      <div class="filters-card green-theme">
+        <div class="filters-title">🔍 Filter Completed Orders</div>
+        <div class="filters-grid">
+          <div class="filter-group">
+            <label class="filter-label">PO No</label>
+            <select class="filter-select" id="completedFilterPONo">
+              <option value="">All PO Numbers</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label class="filter-label">Category</label>
+            <select class="filter-select" id="completedFilterCategory">
+              <option value="">All Categories</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label class="filter-label">Client</label>
+            <select class="filter-select" id="completedFilterClient">
+              <option value="">All Clients</option>
+            </select>
+          </div>
+        </div>
+        <div class="filter-actions">
+          <button class="btn-filter green" onclick="applyCompletedFilters()">Apply Filters</button>
+          <button class="btn-reset" onclick="resetCompletedFilters()">Reset</button>
+        </div>
+      </div>
+
+      <div class="tcard">
+        <div class="tcard-head" style="border-left:4px solid #10b981;">
+          <div class="tcard-title" style="color:#065f46;">🏁 Completed Records</div>
+          <div class="tcard-right">
+            <span class="count-badge" id="completedCount">0 items</span>
+          </div>
+        </div>
+        <div class="tbl-wrap">
+          <table class="dtable completed-tbl">
+            <thead id="completedTableHead"></thead>
+            <tbody id="completedTableBody">
+              <tr><td colspan="10"><div class="empty-state"><div class="empty-icon">⏳</div>Loading...</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div><!-- end page-completed -->
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!--  PAGE: SUPPLIED ITEMS                                 -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <div class="page" id="page-supplied">
+      <div class="pg-header">
+        <div>
+          <div class="pg-title">Supplied Items</div>
+          <div class="pg-sub">All recorded supply entries</div>
+        </div>
+        <button class="btn-refresh" onclick="loadSuppliedData()">🔄 Refresh</button>
+      </div>
+      <div class="filters-card">
+        <div class="filters-title">🔍 Filter Supplied Items</div>
+        <div class="filters-grid">
+          <div class="filter-group">
+            <label class="filter-label">PO No</label>
+            <select class="filter-select" id="suppliedFilterPONo" onchange="onSuppliedPOChange()">
+              <option value="">All PO Numbers</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label class="filter-label">Category</label>
+            <select class="filter-select" id="suppliedFilterCategory">
+              <option value="">All Categories</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label class="filter-label">Consignee</label>
+            <select class="filter-select" id="suppliedFilterConsignee">
+              <option value="">All Consignees</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label class="filter-label">Total Supplied Qty</label>
+            <input type="text" class="filter-input" id="suppliedQtyDisplay" placeholder="Select PO No to see total" readonly style="background:#e8ffe8;font-weight:700;color:#1a1d3a;cursor:default;"/>
+          </div>
+        </div>
+        <div class="filter-actions">
+          <button class="btn-filter" onclick="applySuppliedFilters()">Apply Filters</button>
+          <button class="btn-reset" onclick="resetSuppliedFilters()">Reset</button>
+        </div>
+      </div>
+      <div class="tcard">
+        <div class="tcard-head">
+          <div class="tcard-title">Supplied Records</div>
+          <div class="tcard-right">
+            <span class="count-badge" id="suppliedCount">0 items</span>
+          </div>
+        </div>
+        <div class="tbl-wrap">
+          <table class="dtable">
+            <thead id="suppliedTableHead"></thead>
+            <tbody id="suppliedTableBody">
+              <tr><td colspan="10"><div class="empty-state"><div class="empty-icon">⏳</div>Loading...</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div><!-- end page-supplied -->
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!--  PAGE: DASHBOARD                                      -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <div class="page" id="page-dashboard">
+      <div class="pg-header">
+        <div>
+          <div class="pg-title">Dashboard</div>
+          <div class="pg-sub">Analytics &amp; Performance Overview</div>
+        </div>
+        <button class="btn-refresh" onclick="loadDashboard()">🔄 Refresh</button>
+      </div>
+
+      <div class="stats-row" style="grid-template-columns:repeat(3,1fr);">
+        <div class="stat-card c1"><div class="sc-label">Pending Orders</div><div class="sc-val" id="dashStatPending">—</div><div class="sc-ico">⏳</div></div>
+        <div class="stat-card c3"><div class="sc-label">Total Sales (w/ 18% GST)</div><div class="sc-val" id="dashStatSalesVal" style="font-size:20px;">—</div><div class="sc-ico">💰</div></div>
+        <div class="stat-card c4"><div class="sc-label">Total Pending Value (₹)</div><div class="sc-val" id="dashStatPendingVal" style="font-size:20px;">—</div><div class="sc-ico">⏳</div></div>
+      </div>
+
+      <div class="charts-row">
+        <div class="chart-card full">
+          <div class="chart-title">🏆 Top 10 Clients — Sales Value incl. 18% GST (₹)</div>
+          <div class="chart-wrap"><canvas id="chartClients"></canvas></div>
+        </div>
+      </div>
+
+      <div class="dash-section-head"><span>⏳ Pending Orders Analysis</span></div>
+      <div class="dash-filter-bar">
+        <div class="dfb-group">
+          <label class="filter-label">Filter by Category</label>
+          <select class="filter-select" id="dashPendingCatFilter" onchange="applyDashPendingFilter()" style="min-width:200px;">
+            <option value="">All Categories</option>
+          </select>
+        </div>
+        <div class="dfb-stat">Total Pending Value: <strong id="dashPendingTotalVal">—</strong></div>
+      </div>
+      <div class="charts-row" style="align-items:flex-start;">
+        <div class="chart-card" style="overflow:auto;max-height:420px;padding:0;">
+          <div class="tcard-head" style="padding:14px 20px;position:sticky;top:0;z-index:5;background:#fff;border-bottom:1px solid var(--g200);">
+            <div class="tcard-title">📋 Category-wise Pending Order Value</div>
+            <span class="count-badge" id="dashPendingCatCount">—</span>
+          </div>
+          <table class="dtable">
+            <thead><tr>
+              <th>Category</th>
+              <th style="text-align:right;">Pending Qty</th>
+              <th style="text-align:right;">Order Value (₹)</th>
+              <th style="text-align:right;">% Share</th>
+            </tr></thead>
+            <tbody id="dashPendingCatBody">
+              <tr><td colspan="4"><div class="empty-state"><div class="empty-icon">⏳</div>Loading...</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">🍩 Pending Order Value — Category-wise</div>
+          <div class="chart-wrap tall"><canvas id="chartPendingDonut"></canvas></div>
+        </div>
+      </div>
+
+      <div class="dash-section-head" style="font-size:13px;padding:10px 20px;margin-top:18px;"><span>🏛️ Pending Orders — Pvt vs Govt (Category-wise Value)</span></div>
+      <div class="charts-row">
+        <div class="chart-card">
+          <div class="chart-title">🏢 Pvt — Category-wise Pending Value (₹)</div>
+          <div class="chart-wrap tall"><canvas id="chartPendingPvtCat"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">🏛️ Govt — Category-wise Pending Value (₹)</div>
+          <div class="chart-wrap tall"><canvas id="chartPendingGovtCat"></canvas></div>
+        </div>
+      </div>
+
+      <div class="dash-section-head" style="background:linear-gradient(135deg,#065f46,#10b981);"><span>💰 Sales Report Dashboard</span></div>
+      <div class="dash-filter-bar">
+        <div class="dfb-group">
+          <label class="filter-label">Month</label>
+          <select class="filter-select" id="salesFilterMonth" onchange="applyDashSalesFilter()" style="min-width:160px;">
+            <option value="">All Months</option>
+          </select>
+        </div>
+        <div class="dfb-group">
+          <label class="filter-label">Client Type</label>
+          <select class="filter-select" id="salesFilterClientType" onchange="applyDashSalesFilter()" style="min-width:140px;">
+            <option value="">All Types</option>
+            <option value="Pvt">Pvt</option>
+            <option value="Govt">Govt</option>
+          </select>
+        </div>
+        <div class="dfb-group">
+          <label class="filter-label">Division</label>
+          <select class="filter-select" id="salesFilterDivision" onchange="applyDashSalesFilter()" style="min-width:160px;">
+            <option value="">All Divisions</option>
+          </select>
+        </div>
+        <div class="dfb-stat">Filtered Sales Value (incl. 18% GST): <strong id="salesFilteredVal">—</strong></div>
+      </div>
+
+      <div class="dash-section-head" style="font-size:13px;padding:10px 20px;margin-top:4px;background:linear-gradient(135deg,#065f46,#10b981);"><span>🏛️ Sales — Pvt vs Govt (Division-wise Value)</span></div>
+      <div class="charts-row">
+        <div class="chart-card">
+          <div class="chart-title">🏢 Pvt — Division-wise Sales Value incl. 18% GST (₹)</div>
+          <div class="chart-wrap tall"><canvas id="chartSalesPvtCat"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">🏛️ Govt — Division-wise Sales Value incl. 18% GST (₹)</div>
+          <div class="chart-wrap tall"><canvas id="chartSalesGovtCat"></canvas></div>
+        </div>
+      </div>
+      <div class="charts-row">
+        <div class="chart-card full">
+          <div class="chart-title">📊 Division-wise Total Sales Value incl. 18% GST (₹)</div>
+          <div class="chart-wrap tall"><canvas id="chartSalesCatTotal"></canvas></div>
+        </div>
+      </div>
+    </div><!-- end page-dashboard -->
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!--  PAGE: SUPPLY FORM                                    -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <div class="page" id="page-form">
+      <div class="pg-header">
+        <div>
+          <div class="pg-title">Add Supply Entry</div>
+          <div class="pg-sub">Record a new supply against a pending order</div>
+        </div>
+      </div>
+      <div class="form-card">
+        <div class="form-title">📋 Supply Entry Form</div>
+        <div class="form-grid">
+          <div class="mf full">
+            <label>PO Number *</label>
+            <select id="poNo" onchange="loadPODetails()">
+              <option value="">— Select PO No —</option>
+            </select>
+          </div>
+          <div class="mf">
+            <label>Client Name</label>
+            <select id="client"><option value="">Select Client</option></select>
+          </div>
+          <div class="mf">
+            <label>Consignee</label>
+            <select id="consignee"><option value="">Select Consignee</option></select>
+          </div>
+          <div class="mf">
+            <label>Product Category</label>
+            <select id="category"><option value="">Select Category</option></select>
+          </div>
+          <div class="mf">
+            <label>PO Product</label>
+            <select id="product"><option value="">Select Product</option></select>
+          </div>
+          <div class="mf">
+            <label>Supplied Quantity *</label>
+            <input type="number" id="qty" placeholder="Enter quantity" min="0"/>
+          </div>
+          <div class="mf">
+            <label>UOM (Unit of Measure) *</label>
+            <select id="uom">
+              <option value="">— Select UOM —</option>
+              <option value="MT">MT</option>
+              <option value="Nos">Nos</option>
+              <option value="Sets">Sets</option>
+              <option value="Kg">Kg</option>
+            </select>
+          </div>
+          <div class="mf">
+            <label>Supplied Date *</label>
+            <input type="date" id="date"/>
+          </div>
+          <div class="mf">
+            <label>Delivery Period</label>
+            <select id="delivery"><option value="">Select Delivery Period</option></select>
+          </div>
+        </div>
+        <button class="btn-submit" onclick="submitForm()">✅ Submit Supply Entry</button>
+      </div>
+    </div><!-- end page-form -->
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!--  PAGE: NEW PO ENTRY                                   -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <div class="page" id="page-newpo">
+      <div class="pg-header">
+        <div>
+          <div class="pg-title">Entry New PO</div>
+          <div class="pg-sub">Add a new Purchase Order with multiple items to Pending Items sheet</div>
+        </div>
+      </div>
+
+      <div class="npo-card">
+        <div class="npo-header">
+          <div class="npo-header-icon">📋</div>
+          <div class="npo-header-title">New Purchase Order Entry</div>
+          <div class="npo-header-sub">Fill PO details once — add multiple items using "+ Add Item" button</div>
+        </div>
+
+        <div class="npo-body">
+          <div class="npo-section">
+            <div class="npo-section-label">🗂️ PO Header — Common for All Items</div>
+            <div class="npo-grid">
+              <div class="nf">
+                <label>Client Type <span class="req">*</span></label>
+                <select id="npo_clientType">
+                  <option value="">— Select —</option>
+                  <option value="Pvt">Pvt</option>
+                  <option value="Govt">Govt</option>
+                </select>
+              </div>
+              <div class="nf">
+                <label>PO No. <span class="req">*</span></label>
+                <input type="text" id="npo_poNo" placeholder="e.g. PO/2025/001"/>
+              </div>
+              <div class="nf">
+                <label>Client Name <span class="req">*</span></label>
+                <input type="text" id="npo_clientName" placeholder="Enter client name"/>
+              </div>
+              <div class="nf">
+                <label>PO Date <span class="req">*</span></label>
+                <input type="date" id="npo_poDate"/>
+              </div>
+            </div>
+          </div>
+
+          <div class="npo-divider"></div>
+
+          <div class="npo-section">
+            <div class="npo-section-label">📦 Items
+              <span id="npo_itemCount" style="background:#667eea;color:#fff;border-radius:20px;padding:2px 10px;font-size:11px;margin-left:8px;">1 item</span>
+            </div>
+            <div id="npo_itemsContainer"></div>
+            <button class="btn-add-item" onclick="addNPOItem()">＋ Add Another Item</button>
+          </div>
+        </div>
+
+        <div class="npo-footer">
+          <button class="btn-npo-submit" id="npoSubmitBtn" onclick="submitNewPO()">
+            <span>💾</span> Save All to Google Sheets
+          </button>
+          <button class="btn-npo-reset" onclick="resetNewPOForm()">🔄 Clear All</button>
+          <span class="npo-required-note"><span style="color:var(--red)">*</span> Required fields</span>
+        </div>
+      </div>
+    </div><!-- end page-newpo -->
+
+  </main>
+</div><!-- end #app -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  GLOBALS
+// ═══════════════════════════════════════════════════════════════
+var pendingData       = [];
+var suppliedData      = [];
+var completedData     = [];
+var filteredPending   = [];
+var filteredSupplied  = [];
+var filteredCompleted = [];
+var currentUser       = '';
+var dashCharts        = {};
+var dashPendingProdRows = [];
+var salesData           = [];
+var salesFilteredRows   = [];
+
+var PALETTE = ['#667eea','#10b981','#f59e0b','#ef4444','#3b82f6',
+               '#8b5cf6','#06b6d4','#f97316','#84cc16','#ec4899'];
+
+// ═══════════════════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════════════════
+function loading(show) {
+  var bar = document.getElementById('loadingBar');
+  bar.style.width = show ? '70%' : '100%';
+  if (!show) setTimeout(function(){ bar.style.width = '0'; }, 400);
+}
+
+function toast(msg, type) {
+  var t = document.getElementById('toast');
+  var icons = { success:'✅', error:'❌', info:'ℹ️' };
+  t.innerHTML = (icons[type] || '') + ' ' + msg;
+  t.className = 'toast ' + (type || 'info') + ' show';
+  setTimeout(function(){ t.classList.remove('show'); }, 3500);
+}
+
+function fmtIndian(n) {
+  if (n === null || n === undefined || n === '') return '—';
+  n = Math.round(Number(n));
+  if (isNaN(n)) return '—';
+  var s = String(n);
+  if (s.length <= 3) return s;
+  var last3 = s.slice(-3);
+  var rest  = s.slice(0, s.length - 3);
+  return rest.replace(/\B(?=(\d{2})+(?!\d))/g, ',') + ',' + last3;
+}
+
+function formatVal(val) {
+  if (val === undefined || val === null || val === '') return '—';
+  var num = parseFloat(val);
+  if (!isNaN(num) && String(val).indexOf('.') !== -1) return num.toFixed(2);
+  return val;
+}
+
+function getField(row, candidates) {
+  for (var i = 0; i < candidates.length; i++) {
+    if (row[candidates[i]] !== undefined && row[candidates[i]] !== null && String(row[candidates[i]]).trim() !== '') {
+      return row[candidates[i]];
+    }
+  }
+  var keys = Object.keys(row);
+  var cl   = candidates.map(function(c){ return c.toLowerCase().replace(/[\s_.]/g,''); });
+  for (var j = 0; j < keys.length; j++) {
+    var kl = keys[j].toLowerCase().replace(/[\s_.]/g,'');
+    for (var c = 0; c < cl.length; c++) {
+      if (kl === cl[c] && row[keys[j]] !== '' && row[keys[j]] !== null && row[keys[j]] !== undefined) {
+        return row[keys[j]];
+      }
+    }
+  }
+  return '';
+}
+
+function getClientType(row) {
+  var keys = Object.keys(row);
+  for (var i = 0; i < keys.length; i++) {
+    var kl = keys[i].toLowerCase().replace(/[\s_.]/g,'');
+    if (kl === 'clienttype') {
+      var val = String(row[keys[i]] || '').trim().toUpperCase();
+      if (!val) continue;
+      if (val === 'GOVT' || val === 'GOVERNMENT' || val.indexOf('GOVT') !== -1 || val.indexOf('GOV') !== -1) return 'Govt';
+      if (val === 'PVT'  || val === 'PRIVATE'    || val.indexOf('PVT')  !== -1 || val.indexOf('PRIV') !== -1) return 'Pvt';
+      return val.charAt(0).toUpperCase() + val.slice(1).toLowerCase();
+    }
+  }
+  var clientVal = String(getField(row, ['Client','client','Client Name','ClientName']) || '').toUpperCase();
+  if (/GOVT|GOV|GOVERNMENT|MUNICIPAL|NAGAR|BOARD|AUTHORITY|PWD|CPWD|NTPC|ONGC|BHEL|GAIL|SAIL|RAILWAY|DRDO|ISRO|HAL|BEL|IOCL|HPCL|BPCL/.test(clientVal)) return 'Govt';
+  return 'Pvt';
+}
+
+function getSalesValue(row) {
+  var keys = Object.keys(row);
+  for (var i = 0; i < keys.length; i++) {
+    var kl = keys[i].toLowerCase().replace(/[\s_.]/g,'');
+    if (kl === 'basictotalvalue' || kl === 'totalvalue' || kl === 'basicvalue' || kl === 'basicamount') {
+      var v = parseFloat(row[keys[i]] || 0);
+      return isNaN(v) ? 0 : v;
+    }
+  }
+  return 0;
+}
+
+function getSalesMonth(row) {
+  var keys = Object.keys(row);
+  for (var i = 0; i < keys.length; i++) {
+    var kl = keys[i].toLowerCase().replace(/[\s_.]/g,'');
+    if (kl === 'monthofdispatch' || kl === 'month' || kl === 'dispatchmonth') {
+      return String(row[keys[i]] || '').trim();
+    }
+  }
+  return '';
+}
+
+function getSalesDivision(row) {
+  var keys = Object.keys(row);
+  for (var i = 0; i < keys.length; i++) {
+    var kl = keys[i].toLowerCase().replace(/[\s_.]/g,'');
+    if (kl === 'division') return String(row[keys[i]] || '').trim() || 'Unknown';
+  }
+  return 'Unknown';
+}
+
+function destroyChart(key) {
+  if (dashCharts[key]) { dashCharts[key].destroy(); dashCharts[key] = null; }
+}
+
+function makeHorizBarChart(canvasId, labels, values, colors, chartKey, labelText) {
+  destroyChart(chartKey);
+  if (!labels || labels.length === 0) return;
+  dashCharts[chartKey] = new Chart(document.getElementById(canvasId).getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{ label: labelText || 'Value', data: values,
+        backgroundColor: colors || labels.map(function(_, i){ return PALETTE[i % PALETTE.length]; }),
+        borderRadius: 7 }]
+    },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false },
+        tooltip: { callbacks: { label: function(ctx){ return ' ₹' + fmtIndian(ctx.raw); } } } },
+      scales: { x: { beginAtZero: true, ticks: { callback: function(v){ return '₹' + fmtIndian(v); } } } }
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  LOGIN / LOGOUT
+// ═══════════════════════════════════════════════════════════════
+function doLogin() {
+  var username = document.getElementById('loginUser').value.trim();
+  var password = document.getElementById('loginPass').value;
+  var err      = document.getElementById('loginErr');
+  var btn      = document.getElementById('loginBtn');
+  if (!username || !password) {
+    err.textContent = '⚠️ Please enter both username and password';
+    err.style.display = 'block'; return;
+  }
+  btn.disabled = true; btn.textContent = 'Signing in...';
+  err.style.display = 'none'; loading(true);
+  google.script.run
+    .withSuccessHandler(function(res) {
+      loading(false); btn.disabled = false; btn.textContent = 'Sign In →';
+      if (res.success) {
+        currentUser = res.username || username;
+        document.getElementById('loginPage').style.display = 'none';
+        document.getElementById('app').style.display       = 'block';
+        document.getElementById('userName').textContent    = currentUser;
+        document.getElementById('userAvatar').textContent  = currentUser.charAt(0).toUpperCase();
+        initApp();
+      } else {
+        err.textContent    = '❌ ' + (res.message || 'Login failed');
+        err.style.display  = 'block';
+      }
+    })
+    .withFailureHandler(function(error) {
+      loading(false); btn.disabled = false; btn.textContent = 'Sign In →';
+      err.textContent   = '❌ Connection error: ' + error.message;
+      err.style.display = 'block';
+    })
+    .handleLogin(username, password);
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && document.getElementById('loginPage').style.display !== 'none') doLogin();
+});
+
+function doLogout() {
+  document.getElementById('loginPage').style.display = 'flex';
+  document.getElementById('app').style.display       = 'none';
+  document.getElementById('loginUser').value = '';
+  document.getElementById('loginPass').value = '';
+  pendingData = []; suppliedData = []; salesData = []; completedData = [];
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  APP INIT / PAGE NAVIGATION
+// ═══════════════════════════════════════════════════════════════
+function initApp() {
+  loadPendingData();
+  loadSupplyFormData();
+}
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('.sb-item').forEach(function(i){ i.classList.remove('active'); });
+  var pg  = document.getElementById('page-' + name);
+  var nav = document.getElementById('nav-'  + name);
+  if (pg)  pg.classList.add('active');
+  if (nav) nav.classList.add('active');
+  if (name === 'supplied')  loadSuppliedData();
+  if (name === 'completed') loadCompletedData();
+  if (name === 'dashboard') loadDashboard();
+  if (name === 'newpo')     initNPOItems();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  PENDING ORDERS
+// ═══════════════════════════════════════════════════════════════
+function loadPendingData() {
+  loading(true);
+  document.getElementById('pendingTableBody').innerHTML =
+    '<tr><td colspan="10"><div class="empty-state"><div class="empty-icon">⏳</div>Loading data...</div></td></tr>';
+  google.script.run
+    .withSuccessHandler(function(res) {
+      loading(false);
+      if (res.success) {
+        pendingData     = res.rows || [];
+        filteredPending = pendingData.slice();
+        renderPendingTable(res.headers, filteredPending);
+        loadPendingFilters();
+        document.getElementById('pendingBadge').textContent = pendingData.length;
+        toast('Pending data loaded', 'success');
+      } else {
+        document.getElementById('pendingTableBody').innerHTML =
+          '<tr><td colspan="10"><div class="empty-state"><div class="empty-icon">⚠️</div>' + res.message + '</div></td></tr>';
+        toast(res.message, 'error');
+      }
+    })
+    .withFailureHandler(function(error) {
+      loading(false);
+      document.getElementById('pendingTableBody').innerHTML =
+        '<tr><td colspan="10"><div class="empty-state"><div class="empty-icon">⚠️</div>Error: ' + error.message + '</div></td></tr>';
+      toast('Failed to load data', 'error');
+    })
+    .getPendingItems();
+}
+
+function renderPendingTable(headers, rows) {
+  var thead = document.getElementById('pendingTableHead');
+  var tbody = document.getElementById('pendingTableBody');
+  var visibleHeaders = (headers || []).filter(function(h) {
+    var lower = h.toLowerCase().trim();
+    return lower !== 'rate' && lower !== 'balance' &&
+           lower !== 'po rate' && lower !== 'balance value' &&
+           lower !== 'rate value' && lower !== 'po balance';
+  });
+  if (visibleHeaders.length > 0) {
+    thead.innerHTML = '<tr>' + visibleHeaders.map(function(h) {
+      var cls = (h === 'PO Product') ? ' class="col-po-product"' : '';
+      return '<th' + cls + '>' + h + '</th>';
+    }).join('') + '</tr>';
+  }
+  if (!rows || rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="' + (visibleHeaders.length || 10) + '"><div class="empty-state"><div class="empty-icon">📭</div>No pending items found</div></td></tr>';
+    document.getElementById('pendingCount').textContent = '0 items';
+    return;
+  }
+  tbody.innerHTML = rows.map(function(row) {
+    return '<tr>' + visibleHeaders.map(function(h) {
+      var cls   = (h === 'PO Product') ? ' class="col-po-product"' : '';
+      var val   = formatVal(row[h]);
+      var title = ' title="' + String(row[h] || '').replace(/"/g, '&quot;') + '"';
+      return '<td' + cls + title + '>' + val + '</td>';
+    }).join('') + '</tr>';
+  }).join('');
+  document.getElementById('pendingCount').textContent = rows.length + ' items';
+}
+
+function loadPendingFilters() {
+  var poKey = '';
+  if (pendingData.length > 0) {
+    var keys = Object.keys(pendingData[0]);
+    for (var k = 0; k < keys.length; k++) {
+      var kl = keys[k].toLowerCase().replace(/[\s_]/g,'');
+      if (kl === 'pono' || kl === 'ponumber' || kl === 'purchaseorderno') { poKey = keys[k]; break; }
+    }
+    if (!poKey) {
+      for (var k = 0; k < keys.length; k++) {
+        if (keys[k].toLowerCase().indexOf('po') !== -1 && keys[k].toLowerCase().indexOf('product') === -1) { poKey = keys[k]; break; }
+      }
+    }
+  }
+  var poNos = [];
+  pendingData.forEach(function(row) {
+    var po = poKey ? String(row[poKey] || '') : '';
+    if (po && poNos.indexOf(po) === -1) poNos.push(po);
+  });
+  poNos.sort();
+  var poSel = document.getElementById('pendingFilterPONo');
+  poSel.setAttribute('data-po-key', poKey);
+  poSel.innerHTML = '<option value="">All PO Numbers</option>' +
+    poNos.map(function(p){ return '<option value="'+p+'">'+p+'</option>'; }).join('');
+
+  var consKey = '';
+  if (pendingData.length > 0) {
+    var rkeys = Object.keys(pendingData[0]);
+    for (var i = 0; i < rkeys.length; i++) {
+      if (rkeys[i].toLowerCase().replace(/[\s_]/g,'') === 'consignee') { consKey = rkeys[i]; break; }
+    }
+  }
+  var consSel = document.getElementById('pendingFilterConsignee');
+  consSel.setAttribute('data-cons-key', consKey);
+  consSel.innerHTML = '<option value="">All Consignees</option>';
+  consSel.disabled  = true;
+
+  google.script.run
+    .withSuccessHandler(function(opts) {
+      var cts = document.getElementById('pendingFilterCategory');
+      cts.innerHTML = '<option value="">All Categories</option>' +
+        opts.categories.map(function(c){ return '<option value="'+c+'">'+c+'</option>'; }).join('');
+    })
+    .getFilterOptions('Pending items');
+}
+
+function onPendingPOChange() {
+  var poNo    = document.getElementById('pendingFilterPONo').value;
+  var poKey   = document.getElementById('pendingFilterPONo').getAttribute('data-po-key') || '';
+  var consKey = document.getElementById('pendingFilterConsignee').getAttribute('data-cons-key') || '';
+  var consSel = document.getElementById('pendingFilterConsignee');
+  consSel.innerHTML = '<option value="">All Consignees</option>';
+  consSel.value     = '';
+  if (!poNo) { consSel.disabled = true; return; }
+  var consignees = [];
+  pendingData.forEach(function(row) {
+    var rowPO = poKey ? String(row[poKey] || '') : '';
+    if (rowPO !== poNo) return;
+    var c = consKey ? String(row[consKey] || '') : '';
+    if (c && consignees.indexOf(c) === -1) consignees.push(c);
+  });
+  consignees.sort();
+  consSel.innerHTML = '<option value="">All Consignees</option>' +
+    consignees.map(function(c){ return '<option value="'+c+'">'+c+'</option>'; }).join('');
+  consSel.disabled = false;
+}
+
+function applyPendingFilters() {
+  var poNo      = document.getElementById('pendingFilterPONo').value;
+  var poKey     = document.getElementById('pendingFilterPONo').getAttribute('data-po-key') || '';
+  var consignee = document.getElementById('pendingFilterConsignee').value;
+  var consKey   = document.getElementById('pendingFilterConsignee').getAttribute('data-cons-key') || '';
+  var category  = document.getElementById('pendingFilterCategory').value;
+  filteredPending = pendingData.filter(function(row) {
+    if (poNo) {
+      var rowPO = poKey ? String(row[poKey] || '') : '';
+      if (rowPO !== poNo) return false;
+    }
+    if (consignee) {
+      var rowCons = consKey ? String(row[consKey] || '') : '';
+      if (rowCons !== consignee) return false;
+    }
+    if (category && row['Product Category'] !== category) return false;
+    return true;
+  });
+  var headers = pendingData.length > 0 ? Object.keys(pendingData[0]) : [];
+  renderPendingTable(headers, filteredPending);
+  toast('Filters applied: ' + filteredPending.length + ' items', 'info');
+}
+
+function resetPendingFilters() {
+  document.getElementById('pendingFilterPONo').value = '';
+  var consSel = document.getElementById('pendingFilterConsignee');
+  consSel.innerHTML = '<option value="">All Consignees</option>';
+  consSel.value = ''; consSel.disabled = true;
+  document.getElementById('pendingFilterCategory').value = '';
+  filteredPending = pendingData.slice();
+  var headers = pendingData.length > 0 ? Object.keys(pendingData[0]) : [];
+  renderPendingTable(headers, filteredPending);
+  toast('Filters reset', 'info');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  COMPLETED ORDERS
+// ═══════════════════════════════════════════════════════════════
+function loadCompletedData() {
+  loading(true);
+  document.getElementById('completedTableBody').innerHTML =
+    '<tr><td colspan="10"><div class="empty-state"><div class="empty-icon">⏳</div>Loading completed orders...</div></td></tr>';
+  google.script.run
+    .withSuccessHandler(function(res) {
+      loading(false);
+      if (!res.success) {
+        document.getElementById('completedTableBody').innerHTML =
+          '<tr><td colspan="10"><div class="empty-state"><div class="empty-icon">⚠️</div>' + res.message + '</div></td></tr>';
+        toast(res.message, 'error'); return;
+      }
+      if (res.noBalanceCol) {
+        document.getElementById('completedTableBody').innerHTML =
+          '<tr><td colspan="10"><div class="empty-state"><div class="empty-icon">ℹ️</div>' +
+          '<p style="font-weight:700;color:#1a1d3a;margin-bottom:8px;">No Balance Qty column found</p>' +
+          '<p style="font-size:13px;">Please add a column named <b>"Balance Qty"</b> to the "Pending items" sheet.</p>' +
+          '</div></td></tr>';
+        toast('Balance column not found in sheet', 'info'); return;
+      }
+      completedData     = res.rows || [];
+      filteredCompleted = completedData.slice();
+      renderCompletedTable(res.headers, filteredCompleted);
+      loadCompletedFilters();
+      document.getElementById('completedBadge').textContent    = completedData.length;
+      document.getElementById('completedStatCount').textContent = completedData.length;
+      toast('Completed orders loaded: ' + completedData.length + ' items', 'success');
+    })
+    .withFailureHandler(function(error) {
+      loading(false);
+      document.getElementById('completedTableBody').innerHTML =
+        '<tr><td colspan="10"><div class="empty-state"><div class="empty-icon">⚠️</div>Error: ' + error.message + '</div></td></tr>';
+      toast('Failed to load completed orders', 'error');
+    })
+    .getCompletedItems();
+}
+
+function renderCompletedTable(headers, rows) {
+  var thead = document.getElementById('completedTableHead');
+  var tbody = document.getElementById('completedTableBody');
+  var visibleHeaders = (headers || []).filter(function(h) {
+    var lower = h.toLowerCase().trim();
+    return lower !== 'rate' && lower !== 'po rate' &&
+           lower !== 'rate value' && lower !== 'po balance';
+  });
+  if (visibleHeaders.length > 0) {
+    thead.innerHTML = '<tr>' + visibleHeaders.map(function(h) {
+      var cls = (h === 'PO Product') ? ' class="col-po-product"' : '';
+      return '<th' + cls + '>' + h + '</th>';
+    }).join('') + '</tr>';
+  }
+  if (!rows || rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="' + (visibleHeaders.length || 10) + '"><div class="empty-state">' +
+      '<div class="empty-icon">🏁</div>' +
+      '<p style="font-weight:700;margin-bottom:6px;">No completed orders yet</p>' +
+      '<p style="font-size:13px;">Orders where Balance Qty reaches 0 will appear here.</p>' +
+      '</div></td></tr>';
+    document.getElementById('completedCount').textContent      = '0 items';
+    document.getElementById('completedStatCount').textContent  = '0';
+    return;
+  }
+  tbody.innerHTML = rows.map(function(row) {
+    return '<tr>' + visibleHeaders.map(function(h) {
+      var cls   = (h === 'PO Product') ? ' class="col-po-product"' : '';
+      var val   = formatVal(row[h]);
+      var balHL = '';
+      if (h.toLowerCase().indexOf('balance') !== -1) {
+        balHL = ' style="color:#065f46;font-weight:800;"';
+        val   = '<span class="completed-badge">✅ ' + val + '</span>';
+      }
+      var title = ' title="' + String(row[h] || '').replace(/"/g, '&quot;') + '"';
+      return '<td' + cls + title + balHL + '>' + val + '</td>';
+    }).join('') + '</tr>';
+  }).join('');
+  document.getElementById('completedCount').textContent     = rows.length + ' items';
+  document.getElementById('completedStatCount').textContent = rows.length;
+}
+
+function loadCompletedFilters() {
+  if (completedData.length === 0) return;
+  var keys = Object.keys(completedData[0]);
+
+  var poKey = '';
+  for (var k = 0; k < keys.length; k++) {
+    var kl = keys[k].toLowerCase().replace(/[\s_]/g,'');
+    if (kl === 'pono' || kl === 'ponumber') { poKey = keys[k]; break; }
+  }
+  if (!poKey) {
+    for (var k = 0; k < keys.length; k++) {
+      if (keys[k].toLowerCase().indexOf('po') !== -1 && keys[k].toLowerCase().indexOf('product') === -1) { poKey = keys[k]; break; }
+    }
+  }
+  var poNos = [];
+  completedData.forEach(function(row) {
+    var po = poKey ? String(row[poKey] || '') : '';
+    if (po && poNos.indexOf(po) === -1) poNos.push(po);
+  });
+  poNos.sort();
+  var poSel = document.getElementById('completedFilterPONo');
+  poSel.setAttribute('data-po-key', poKey);
+  poSel.innerHTML = '<option value="">All PO Numbers</option>' +
+    poNos.map(function(p){ return '<option value="'+p+'">'+p+'</option>'; }).join('');
+
+  var catKey = '';
+  for (var i = 0; i < keys.length; i++) {
+    var kl2 = keys[i].toLowerCase().replace(/[\s_]/g,'');
+    if (kl2 === 'productcategory' || kl2 === 'category') { catKey = keys[i]; break; }
+  }
+  var cats = [];
+  completedData.forEach(function(row) {
+    var c = catKey ? String(row[catKey] || '') : '';
+    if (c && cats.indexOf(c) === -1) cats.push(c);
+  });
+  cats.sort();
+  var catSel = document.getElementById('completedFilterCategory');
+  catSel.setAttribute('data-cat-key', catKey);
+  catSel.innerHTML = '<option value="">All Categories</option>' +
+    cats.map(function(c){ return '<option value="'+c+'">'+c+'</option>'; }).join('');
+
+  var clientKey = '';
+  for (var i = 0; i < keys.length; i++) {
+    var kl3 = keys[i].toLowerCase().replace(/[\s_]/g,'');
+    if (kl3 === 'client' || kl3 === 'clientname') { clientKey = keys[i]; break; }
+  }
+  var clients = [];
+  completedData.forEach(function(row) {
+    var c = clientKey ? String(row[clientKey] || '') : '';
+    if (c && clients.indexOf(c) === -1) clients.push(c);
+  });
+  clients.sort();
+  var clientSel = document.getElementById('completedFilterClient');
+  clientSel.setAttribute('data-client-key', clientKey);
+  clientSel.innerHTML = '<option value="">All Clients</option>' +
+    clients.map(function(c){ return '<option value="'+c+'">'+c+'</option>'; }).join('');
+}
+
+function applyCompletedFilters() {
+  var poNo      = document.getElementById('completedFilterPONo').value;
+  var poKey     = document.getElementById('completedFilterPONo').getAttribute('data-po-key') || '';
+  var category  = document.getElementById('completedFilterCategory').value;
+  var catKey    = document.getElementById('completedFilterCategory').getAttribute('data-cat-key') || '';
+  var client    = document.getElementById('completedFilterClient').value;
+  var clientKey = document.getElementById('completedFilterClient').getAttribute('data-client-key') || '';
+  filteredCompleted = completedData.filter(function(row) {
+    if (poNo     && poKey     && String(row[poKey]     || '') !== poNo)     return false;
+    if (category && catKey    && String(row[catKey]    || '') !== category)  return false;
+    if (client   && clientKey && String(row[clientKey] || '') !== client)    return false;
+    return true;
+  });
+  var headers = completedData.length > 0 ? Object.keys(completedData[0]) : [];
+  renderCompletedTable(headers, filteredCompleted);
+  toast('Filters applied: ' + filteredCompleted.length + ' items', 'info');
+}
+
+function resetCompletedFilters() {
+  document.getElementById('completedFilterPONo').value     = '';
+  document.getElementById('completedFilterCategory').value = '';
+  document.getElementById('completedFilterClient').value   = '';
+  filteredCompleted = completedData.slice();
+  var headers = completedData.length > 0 ? Object.keys(completedData[0]) : [];
+  renderCompletedTable(headers, filteredCompleted);
+  toast('Filters reset', 'info');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SUPPLIED ITEMS
+// ═══════════════════════════════════════════════════════════════
+function loadSuppliedData() {
+  loading(true);
+  document.getElementById('suppliedTableBody').innerHTML =
+    '<tr><td colspan="10"><div class="empty-state"><div class="empty-icon">⏳</div>Loading data...</div></td></tr>';
+  google.script.run
+    .withSuccessHandler(function(res) {
+      loading(false);
+      if (res.success) {
+        suppliedData     = res.rows || [];
+        filteredSupplied = suppliedData.slice();
+        renderSuppliedTable(res.headers, filteredSupplied);
+        loadSuppliedFilters();
+        document.getElementById('suppliedBadge').textContent = suppliedData.length;
+        toast('Supplied data loaded', 'success');
+      } else {
+        document.getElementById('suppliedTableBody').innerHTML =
+          '<tr><td colspan="10"><div class="empty-state"><div class="empty-icon">⚠️</div>' + res.message + '</div></td></tr>';
+        toast(res.message, 'error');
+      }
+    })
+    .withFailureHandler(function(error) {
+      loading(false);
+      document.getElementById('suppliedTableBody').innerHTML =
+        '<tr><td colspan="10"><div class="empty-state"><div class="empty-icon">⚠️</div>Error: ' + error.message + '</div></td></tr>';
+      toast('Failed to load data', 'error');
+    })
+    .getSuppliedStatus();
+}
+
+function renderSuppliedTable(headers, rows) {
+  var thead = document.getElementById('suppliedTableHead');
+  var tbody = document.getElementById('suppliedTableBody');
+  var visibleHeaders = (headers || []).filter(function(h) {
+    var lower = h.toLowerCase().trim();
+    return lower !== 'delivery period' && lower !== 'delivery' && lower !== 'deliveryperiod';
+  });
+  if (visibleHeaders.length > 0) {
+    thead.innerHTML = '<tr>' + visibleHeaders.map(function(h) {
+      var cls = (h === 'PO Product') ? ' class="col-po-product"' : '';
+      return '<th' + cls + '>' + h + '</th>';
+    }).join('') + '</tr>';
+  }
+  if (!rows || rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="' + (visibleHeaders.length || 10) + '"><div class="empty-state"><div class="empty-icon">📭</div>No supplied items found</div></td></tr>';
+    document.getElementById('suppliedCount').textContent = '0 items';
+    return;
+  }
+  tbody.innerHTML = rows.map(function(row) {
+    return '<tr>' + visibleHeaders.map(function(h) {
+      var cls   = (h === 'PO Product') ? ' class="col-po-product"' : '';
+      var val   = formatVal(row[h]);
+      var title = ' title="' + String(row[h] || '').replace(/"/g, '&quot;') + '"';
+      return '<td' + cls + title + '>' + val + '</td>';
+    }).join('') + '</tr>';
+  }).join('');
+  document.getElementById('suppliedCount').textContent = rows.length + ' items';
+}
+
+function getPOKey() {
+  if (suppliedData.length === 0) return '';
+  var rkeys = Object.keys(suppliedData[0]);
+  var tries = ['PO No','PO Number','Po No','po no','PO_No','PONO'];
+  for (var t = 0; t < tries.length; t++) { if (rkeys.indexOf(tries[t]) !== -1) return tries[t]; }
+  for (var i = 0; i < rkeys.length; i++) {
+    var kl = rkeys[i].toLowerCase().replace(/[\s_]/g,'');
+    if ((kl === 'pono' || kl === 'ponumber') && rkeys[i].toLowerCase().indexOf('product') === -1) return rkeys[i];
+  }
+  for (var i = 0; i < rkeys.length; i++) {
+    if (rkeys[i].toLowerCase().indexOf('po') !== -1 && rkeys[i].toLowerCase().indexOf('product') === -1) return rkeys[i];
+  }
+  return '';
+}
+
+function getSuppliedQtyKey() {
+  if (suppliedData.length === 0) return '';
+  var rkeys = Object.keys(suppliedData[0]);
+  var tries = ['Supplied Qty','Supplied Quantity','Qty','Quantity','supplied qty','supplied quantity'];
+  for (var t = 0; t < tries.length; t++) { if (rkeys.indexOf(tries[t]) !== -1) return tries[t]; }
+  for (var i = 0; i < rkeys.length; i++) {
+    var kl = rkeys[i].toLowerCase().replace(/[\s_]/g,'');
+    if (kl === 'suppliedqty' || kl === 'suppliedquantity' || kl === 'qty' || kl === 'quantity') return rkeys[i];
+  }
+  return '';
+}
+
+function onSuppliedPOChange() {
+  var poNo    = document.getElementById('suppliedFilterPONo').value;
+  var display = document.getElementById('suppliedQtyDisplay');
+  if (!poNo) { display.value = ''; display.placeholder = 'Select PO No to see total'; return; }
+  var poKey  = getPOKey();
+  var qtyKey = getSuppliedQtyKey();
+  var total  = 0, found = 0;
+  suppliedData.forEach(function(row) {
+    var rowPO = poKey ? String(row[poKey] || '') : '';
+    if (rowPO === poNo) {
+      found++;
+      if (qtyKey) { var q = parseFloat(row[qtyKey]); if (!isNaN(q)) total += q; }
+    }
+  });
+  if (found > 0 && qtyKey) {
+    display.value = total % 1 !== 0 ? total.toFixed(2) : String(total);
+  } else if (found > 0) {
+    display.value = found + ' records (qty column not detected)';
+  } else { display.value = ''; display.placeholder = 'No records found'; }
+}
+
+function loadSuppliedFilters() {
+  var poKey = '';
+  if (suppliedData.length > 0) {
+    var keys = Object.keys(suppliedData[0]);
+    for (var k = 0; k < keys.length; k++) {
+      var kl = keys[k].toLowerCase().replace(/[\s_]/g,'');
+      if (kl === 'pono' || kl === 'ponumber') { poKey = keys[k]; break; }
+    }
+    if (!poKey) {
+      for (var k = 0; k < keys.length; k++) {
+        if (keys[k].toLowerCase().indexOf('po') !== -1 && keys[k].toLowerCase().indexOf('product') === -1) { poKey = keys[k]; break; }
+      }
+    }
+  }
+  var poNos = [];
+  suppliedData.forEach(function(row) {
+    var po = poKey ? String(row[poKey] || '') : '';
+    if (po && poNos.indexOf(po) === -1) poNos.push(po);
+  });
+  poNos.sort();
+  var poSel = document.getElementById('suppliedFilterPONo');
+  poSel.setAttribute('data-po-key', poKey);
+  poSel.innerHTML = '<option value="">All PO Numbers</option>' +
+    poNos.map(function(p){ return '<option value="'+p+'">'+p+'</option>'; }).join('');
+
+  var catKey = '';
+  if (suppliedData.length > 0) {
+    var rkeys = Object.keys(suppliedData[0]);
+    for (var i = 0; i < rkeys.length; i++) {
+      var kl2 = rkeys[i].toLowerCase().replace(/[\s_]/g,'');
+      if (kl2 === 'productcategory' || kl2 === 'category') { catKey = rkeys[i]; break; }
+    }
+  }
+  var cats = [];
+  suppliedData.forEach(function(row) {
+    var c = catKey ? String(row[catKey] || '') : '';
+    if (c && cats.indexOf(c) === -1) cats.push(c);
+  });
+  cats.sort();
+  var catSel = document.getElementById('suppliedFilterCategory');
+  catSel.setAttribute('data-cat-key', catKey);
+  catSel.innerHTML = '<option value="">All Categories</option>' +
+    cats.map(function(c){ return '<option value="'+c+'">'+c+'</option>'; }).join('');
+
+  var consKey = '';
+  if (suppliedData.length > 0) {
+    var rkeys2 = Object.keys(suppliedData[0]);
+    for (var i = 0; i < rkeys2.length; i++) {
+      if (rkeys2[i].toLowerCase().replace(/[\s_]/g,'') === 'consignee') { consKey = rkeys2[i]; break; }
+    }
+  }
+  var consignees = [];
+  suppliedData.forEach(function(row) {
+    var c = consKey ? String(row[consKey] || '') : '';
+    if (c && consignees.indexOf(c) === -1) consignees.push(c);
+  });
+  consignees.sort();
+  var consSel = document.getElementById('suppliedFilterConsignee');
+  consSel.setAttribute('data-cons-key', consKey);
+  consSel.innerHTML = '<option value="">All Consignees</option>' +
+    consignees.map(function(c){ return '<option value="'+c+'">'+c+'</option>'; }).join('');
+}
+
+function applySuppliedFilters() {
+  var poNo      = document.getElementById('suppliedFilterPONo').value;
+  var category  = document.getElementById('suppliedFilterCategory').value;
+  var catKey    = document.getElementById('suppliedFilterCategory').getAttribute('data-cat-key') || '';
+  var consignee = document.getElementById('suppliedFilterConsignee').value;
+  var consKey   = document.getElementById('suppliedFilterConsignee').getAttribute('data-cons-key') || '';
+  var poKey     = getPOKey();
+  filteredSupplied = suppliedData.filter(function(row) {
+    if (poNo) { var rowPO = poKey ? String(row[poKey] || '') : ''; if (rowPO !== poNo) return false; }
+    if (category) { var rowCat = catKey ? String(row[catKey] || '') : ''; if (rowCat !== category) return false; }
+    if (consignee) { var rowCons = consKey ? String(row[consKey] || '') : ''; if (rowCons !== consignee) return false; }
+    return true;
+  });
+  var headers = suppliedData.length > 0 ? Object.keys(suppliedData[0]) : [];
+  renderSuppliedTable(headers, filteredSupplied);
+  toast('Filters applied: ' + filteredSupplied.length + ' items', 'info');
+}
+
+function resetSuppliedFilters() {
+  document.getElementById('suppliedFilterPONo').value       = '';
+  document.getElementById('suppliedFilterCategory').value   = '';
+  document.getElementById('suppliedFilterConsignee').value  = '';
+  document.getElementById('suppliedQtyDisplay').value       = '';
+  filteredSupplied = suppliedData.slice();
+  var headers = suppliedData.length > 0 ? Object.keys(suppliedData[0]) : [];
+  renderSuppliedTable(headers, filteredSupplied);
+  toast('Filters reset', 'info');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  DASHBOARD
+// ═══════════════════════════════════════════════════════════════
+function loadDashboard() {
+  loading(true);
+  var pDone  = pendingData.length > 0;
+  var slDone = salesData.length   > 0;
+
+  function tryBuild() {
+    if (pDone && slDone) { loading(false); buildDashboard(); toast('Dashboard loaded', 'success'); }
+  }
+
+  if (pDone && slDone) { tryBuild(); return; }
+
+  if (!pDone) {
+    google.script.run
+      .withSuccessHandler(function(res){
+        pendingData = (res && res.rows) ? res.rows : [];
+        pDone = true; tryBuild();
+      })
+      .withFailureHandler(function(e){ loading(false); toast('Pending data error: ' + e.message, 'error'); })
+      .getPendingItems();
+  }
+  if (!slDone) {
+    google.script.run
+      .withSuccessHandler(function(res){
+        if (!res || !res.success) {
+          toast('Sales data: ' + (res ? res.message : 'unknown error'), 'error');
+          salesData = []; slDone = true; tryBuild(); return;
+        }
+        salesData = res.rows || [];
+        slDone = true; tryBuild();
+      })
+      .withFailureHandler(function(e){ loading(false); toast('Sales data error: ' + e.message, 'error'); })
+      .getSalesData();
+  }
+}
+
+function buildDashboard() {
+  document.getElementById('dashStatPending').textContent = pendingData.length;
+
+  var totalPendingVal = 0;
+  pendingData.forEach(function(r) {
+    var qty  = parseFloat(getField(r, ['PO Qty','PO Quantity','Quantity','Qty','qty']) || 0) || 0;
+    var rate = parseFloat(getField(r, ['Rate','rate','PO Rate','Unit Rate'])           || 0) || 0;
+    totalPendingVal += qty * rate;
+  });
+  document.getElementById('dashStatPendingVal').textContent = '₹' + fmtIndian(totalPendingVal);
+
+  var totalSalesVal = 0;
+  salesData.forEach(function(r) { totalSalesVal += getSalesValue(r) * 1.18; });
+  document.getElementById('dashStatSalesVal').textContent = '₹' + fmtIndian(totalSalesVal);
+
+  // Top 10 Clients
+  var clientSalesVal = {};
+  salesData.forEach(function(r) {
+    var c   = String(getField(r, ['Client','client','Client Name']) || '').trim();
+    if (!c) return;
+    clientSalesVal[c] = (clientSalesVal[c] || 0) + getSalesValue(r) * 1.18;
+  });
+  var topClients = Object.keys(clientSalesVal)
+    .sort(function(a,b){ return clientSalesVal[b] - clientSalesVal[a]; }).slice(0,10);
+  destroyChart('clients');
+  if (topClients.length > 0) {
+    dashCharts.clients = new Chart(document.getElementById('chartClients').getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: topClients,
+        datasets: [{ label: 'Sales Value (₹)',
+          data: topClients.map(function(n){ return clientSalesVal[n]; }),
+          backgroundColor: topClients.map(function(_,i){ return PALETTE[i%PALETTE.length]; }),
+          borderRadius: 6 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false },
+          tooltip: { callbacks: { label: function(ctx){ return ' ₹' + fmtIndian(ctx.raw); } } } },
+        scales: { y: { beginAtZero: true, ticks: { callback: function(v){ return '₹' + fmtIndian(v); } } } }
+      }
+    });
+  }
+
+  // Pending — category-wise
+  var pendingCatMap = {};
+  pendingData.forEach(function(r) {
+    var cat  = String(getField(r, ['Product Category','ProductCategory','Category','category']) || 'Unknown');
+    var qty  = parseFloat(getField(r, ['PO Qty','PO Quantity','Quantity','Qty','qty']) || 0) || 0;
+    var rate = parseFloat(getField(r, ['Rate','rate','PO Rate','Unit Rate'])             || 0) || 0;
+    var val  = qty * rate;
+    if (!pendingCatMap[cat]) pendingCatMap[cat] = { qty: 0, value: 0 };
+    pendingCatMap[cat].qty   += qty;
+    pendingCatMap[cat].value += val;
+  });
+  dashPendingProdRows = Object.keys(pendingCatMap).map(function(k){
+    return { category: k, qty: pendingCatMap[k].qty, value: pendingCatMap[k].value };
+  }).sort(function(a,b){ return b.value - a.value; });
+
+  var catSel = document.getElementById('dashPendingCatFilter');
+  catSel.innerHTML = '<option value="">All Categories</option>' +
+    dashPendingProdRows.map(function(r){ return '<option value="'+r.category+'">'+r.category+'</option>'; }).join('');
+
+  renderDashPendingCat(dashPendingProdRows);
+
+  // Pvt vs Govt pending
+  var pvtPendingCat = {}, govtPendingCat = {};
+  pendingData.forEach(function(r) {
+    var cat  = String(getField(r, ['Product Category','ProductCategory','Category','category']) || 'Unknown');
+    var qty  = parseFloat(getField(r, ['PO Qty','PO Quantity','Quantity','Qty','qty']) || 0) || 0;
+    var rate = parseFloat(getField(r, ['Rate','rate','PO Rate','Unit Rate'])             || 0) || 0;
+    var val  = qty * rate;
+    if (getClientType(r) === 'Govt') govtPendingCat[cat] = (govtPendingCat[cat] || 0) + val;
+    else                              pvtPendingCat[cat]  = (pvtPendingCat[cat]  || 0) + val;
+  });
+  var pvtPCats  = Object.keys(pvtPendingCat).sort(function(a,b){ return pvtPendingCat[b] - pvtPendingCat[a]; });
+  var govtPCats = Object.keys(govtPendingCat).sort(function(a,b){ return govtPendingCat[b] - govtPendingCat[a]; });
+  makeHorizBarChart('chartPendingPvtCat',  pvtPCats,  pvtPCats.map(function(c){ return pvtPendingCat[c]; }),
+    pvtPCats.map(function(_,i){ return PALETTE[i%PALETTE.length]; }),   'pendingPvtCat',  'Pvt Pending (₹)');
+  makeHorizBarChart('chartPendingGovtCat', govtPCats, govtPCats.map(function(c){ return govtPendingCat[c]; }),
+    govtPCats.map(function(_,i){ return PALETTE[(i+2)%PALETTE.length]; }),'pendingGovtCat', 'Govt Pending (₹)');
+
+  // Sales filters population
+  var months = [], divisions = [];
+  salesData.forEach(function(r) {
+    var m = getSalesMonth(r);
+    var d = getSalesDivision(r);
+    if (m && months.indexOf(m)     === -1) months.push(m);
+    if (d && d !== 'Unknown' && divisions.indexOf(d) === -1) divisions.push(d);
+  });
+  months.sort(); divisions.sort();
+  document.getElementById('salesFilterMonth').innerHTML = '<option value="">All Months</option>' +
+    months.map(function(m){ return '<option value="'+m+'">'+m+'</option>'; }).join('');
+  document.getElementById('salesFilterDivision').innerHTML = '<option value="">All Divisions</option>' +
+    divisions.map(function(d){ return '<option value="'+d+'">'+d+'</option>'; }).join('');
+
+  salesFilteredRows = salesData.slice();
+  renderSalesDashboard(salesFilteredRows);
+}
+
+function renderDashPendingCat(rows) {
+  var totalVal = rows.reduce(function(s,r){ return s + r.value; }, 0);
+  document.getElementById('dashPendingTotalVal').textContent = '₹' + fmtIndian(totalVal);
+  document.getElementById('dashPendingCatCount').textContent = rows.length + ' categories';
+
+  var body = document.getElementById('dashPendingCatBody');
+  if (rows.length === 0) {
+    body.innerHTML = '<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">📭</div>No data</div></td></tr>';
+  } else {
+    body.innerHTML = rows.map(function(r) {
+      var pct = totalVal > 0 ? ((r.value / totalVal) * 100).toFixed(1) + '%' : '0%';
+      return '<tr>' +
+        '<td><span class="cat-badge">' + r.category + '</span></td>' +
+        '<td class="num">'       + fmtIndian(r.qty)   + '</td>' +
+        '<td class="val-cell">₹' + fmtIndian(r.value) + '</td>' +
+        '<td class="num">'       + pct                + '</td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  destroyChart('pendingDonut');
+  if (rows.length > 0 && totalVal > 0) {
+    dashCharts.pendingDonut = new Chart(document.getElementById('chartPendingDonut').getContext('2d'), {
+      type: 'doughnut',
+      data: {
+        labels: rows.map(function(r){ return r.category; }),
+        datasets: [{
+          data: rows.map(function(r){ return r.value; }),
+          backgroundColor: rows.map(function(_,i){ return PALETTE[i%PALETTE.length]; }),
+          borderWidth: 3, hoverOffset: 12
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '60%',
+        plugins: {
+          legend: { position: 'right', labels: { boxWidth: 14, padding: 14, font: { size: 12 } } },
+          tooltip: { callbacks: { label: function(ctx) {
+            var total = ctx.dataset.data.reduce(function(a,b){ return a+b; }, 0);
+            var pct   = total > 0 ? ((ctx.raw / total) * 100).toFixed(1) + '%' : '0%';
+            return ' ₹' + fmtIndian(ctx.raw) + ' (' + pct + ')';
+          }}}
+        }
+      }
+    });
+  }
+}
+
+function applyDashPendingFilter() {
+  var cat      = document.getElementById('dashPendingCatFilter').value;
+  var filtered = cat ? dashPendingProdRows.filter(function(r){ return r.category === cat; }) : dashPendingProdRows;
+  renderDashPendingCat(filtered);
+}
+
+function applyDashSalesFilter() {
+  var month      = document.getElementById('salesFilterMonth').value;
+  var clientType = document.getElementById('salesFilterClientType').value;
+  var division   = document.getElementById('salesFilterDivision').value;
+  salesFilteredRows = salesData.filter(function(r) {
+    if (month      && getSalesMonth(r)    !== month)      return false;
+    if (clientType && getClientType(r)    !== clientType) return false;
+    if (division   && getSalesDivision(r) !== division)   return false;
+    return true;
+  });
+  renderSalesDashboard(salesFilteredRows);
+}
+
+function renderSalesDashboard(rows) {
+  var totalVal   = 0;
+  var pvtDivMap  = {};
+  var govtDivMap = {};
+  var allDivMap  = {};
+  rows.forEach(function(r) {
+    var div = getSalesDivision(r);
+    var val = getSalesValue(r) * 1.18;
+    totalVal += val;
+    var ct = getClientType(r);
+    if (ct === 'Govt') govtDivMap[div] = (govtDivMap[div] || 0) + val;
+    else               pvtDivMap[div]  = (pvtDivMap[div]  || 0) + val;
+    allDivMap[div] = (allDivMap[div] || 0) + val;
+  });
+  document.getElementById('salesFilteredVal').textContent = '₹' + fmtIndian(totalVal);
+  document.getElementById('dashStatSalesVal').textContent = '₹' + fmtIndian(totalVal);
+
+  var pvtDivs  = Object.keys(pvtDivMap).sort(function(a,b){ return pvtDivMap[b]  - pvtDivMap[a];  });
+  makeHorizBarChart('chartSalesPvtCat',  pvtDivs,  pvtDivs.map(function(d){ return pvtDivMap[d];  }),
+    pvtDivs.map(function(_,i){ return PALETTE[i%PALETTE.length]; }),    'salesPvtCat',   'Pvt Sales (₹)');
+
+  var govtDivs = Object.keys(govtDivMap).sort(function(a,b){ return govtDivMap[b] - govtDivMap[a]; });
+  makeHorizBarChart('chartSalesGovtCat', govtDivs, govtDivs.map(function(d){ return govtDivMap[d]; }),
+    govtDivs.map(function(_,i){ return PALETTE[(i+3)%PALETTE.length]; }),'salesGovtCat',  'Govt Sales (₹)');
+
+  var allDivs = Object.keys(allDivMap).sort(function(a,b){ return allDivMap[b] - allDivMap[a]; });
+  destroyChart('salesCatTotal');
+  if (allDivs.length > 0) {
+    dashCharts.salesCatTotal = new Chart(document.getElementById('chartSalesCatTotal').getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: allDivs,
+        datasets: [{ label: 'Total Sales (₹)',
+          data: allDivs.map(function(d){ return allDivMap[d]; }),
+          backgroundColor: allDivs.map(function(_,i){ return PALETTE[i%PALETTE.length]; }),
+          borderRadius: 8 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false },
+          tooltip: { callbacks: { label: function(ctx){ return ' ₹' + fmtIndian(ctx.raw); } } } },
+        scales: { y: { beginAtZero: true, ticks: { callback: function(v){ return '₹' + fmtIndian(v); } } } }
+      }
+    });
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SUPPLY FORM
+// ═══════════════════════════════════════════════════════════════
+function loadSupplyFormData() {
+  google.script.run
+    .withSuccessHandler(function(list) {
+      var po = document.getElementById('poNo');
+      po.innerHTML = '<option value="">— Select PO No —</option>';
+      list.forEach(function(p){ po.innerHTML += '<option value="'+p+'">'+p+'</option>'; });
+    })
+    .getPONumbers();
+}
+
+function loadPODetails() {
+  var po = document.getElementById('poNo').value;
+  ['client','consignee','category','delivery','product'].forEach(function(id){
+    var el = document.getElementById(id);
+    var labels = { client:'Select Client', consignee:'Select Consignee', category:'Select Category',
+                   delivery:'Select Delivery Period', product:'Select Product' };
+    el.innerHTML = '<option value="">'+labels[id]+'</option>';
+  });
+  if (!po) return;
+  google.script.run
+    .withSuccessHandler(function(d) {
+      function fill(id, arr) {
+        var el = document.getElementById(id);
+        if (arr && arr.length > 0) arr.forEach(function(v){ el.innerHTML += '<option value="'+v+'">'+v+'</option>'; });
+      }
+      fill('client', d.clients); fill('consignee', d.consignees);
+      fill('category', d.categories); fill('delivery', d.deliveries);
+      fill('product', d.products);
+    })
+    .withFailureHandler(function(err){ toast('Error loading PO details: ' + err.message, 'error'); })
+    .getPODetails(po);
+}
+
+function submitForm() {
+  var data = {
+    poNo:      document.getElementById('poNo').value,
+    qty:       document.getElementById('qty').value,
+    client:    document.getElementById('client').value,
+    uom:       document.getElementById('uom').value,
+    category:  document.getElementById('category').value,
+    date:      document.getElementById('date').value,
+    consignee: document.getElementById('consignee').value,
+    delivery:  document.getElementById('delivery').value,
+    product:   document.getElementById('product').value
+  };
+  if (!data.poNo || !data.qty || !data.uom || !data.date) {
+    toast('Please fill required fields: PO No, Quantity, UOM, Date', 'error'); return;
+  }
+  var btn = document.querySelector('#page-form .btn-submit');
+  btn.disabled = true; btn.textContent = 'Submitting...'; loading(true);
+  google.script.run
+    .withSuccessHandler(function(result) {
+      loading(false); btn.disabled = false; btn.textContent = '✅ Submit Supply Entry';
+      if (result.success) {
+        toast('Data submitted successfully!', 'success');
+        ['qty','date'].forEach(function(id){ document.getElementById(id).value = ''; });
+        document.getElementById('poNo').value = '';
+        document.getElementById('uom').value  = '';
+        loadPODetails();
+        suppliedData  = [];
+        completedData = [];
+      } else { toast('Error: ' + result.message, 'error'); }
+    })
+    .withFailureHandler(function(error) {
+      loading(false); btn.disabled = false; btn.textContent = '✅ Submit Supply Entry';
+      toast('Submission failed: ' + error.message, 'error');
+    })
+    .submitSupplyData(data);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  NEW PO ENTRY FORM
+// ═══════════════════════════════════════════════════════════════
+var npoItemCounter = 0;
+
+var CATEGORY_OPTIONS = [
+  'Fish Plate','Metal Liners','Railway Trading',
+  'Rolling Mill','Switches','ISEJ','GIRJ'
+];
+var UOM_OPTIONS = ['MT','KG','Nos','Sets'];
+
+function categoryOptionsHTML() {
+  return '<option value="">— Select Category —</option>' +
+    CATEGORY_OPTIONS.map(function(c){ return '<option value="'+c+'">'+c+'</option>'; }).join('');
+}
+function uomOptionsHTML() {
+  return '<option value="">— Select UOM —</option>' +
+    UOM_OPTIONS.map(function(u){ return '<option value="'+u+'">'+u+'</option>'; }).join('');
+}
+
+function buildItemCard(idx) {
+  var num = idx + 1;
+  return '<div class="npo-item-card" id="npo_item_'+idx+'">' +
+    '<div class="npo-item-card-head">' +
+      '<span class="npo-item-num">📦 Item ' + num + '</span>' +
+      (idx > 0 ? '<button class="btn-remove-item" onclick="removeNPOItem('+idx+')">✕ Remove</button>' : '<span></span>') +
+    '</div>' +
+    '<div class="npo-grid g3">' +
+      '<div class="nf"><label>Consignee <span class="req">*</span></label>' +
+        '<input type="text" id="npo_cons_'+idx+'" placeholder="Enter consignee"/></div>' +
+      '<div class="nf"><label>Product Category <span class="req">*</span></label>' +
+        '<select id="npo_cat_'+idx+'">' + categoryOptionsHTML() + '</select></div>' +
+      '<div class="nf"><label>PO Delivery Date <span class="req">*</span></label>' +
+        '<input type="date" id="npo_deldate_'+idx+'"/></div>' +
+      '<div class="nf"><label>UOM <span class="req">*</span></label>' +
+        '<select id="npo_uom_'+idx+'">' + uomOptionsHTML() + '</select></div>' +
+      '<div class="nf" style="grid-column:span 2;"><label>PO Product <span class="req">*</span></label>' +
+        '<input type="text" id="npo_prod_'+idx+'" placeholder="Enter full product description"/></div>' +
+      '<div class="nf"><label>PO Qty. <span class="req">*</span></label>' +
+        '<input type="number" id="npo_qty_'+idx+'" placeholder="Quantity" min="0" step="any"/></div>' +
+      '<div class="nf"><label>PO Rate (₹) <span class="req">*</span></label>' +
+        '<input type="number" id="npo_rate_'+idx+'" placeholder="Rate" min="0" step="any"/></div>' +
+    '</div>' +
+  '</div>';
+}
+
+var npoActiveItems = [];
+
+function initNPOItems() {
+  npoItemCounter = 0;
+  npoActiveItems = [0];
+  document.getElementById('npo_itemsContainer').innerHTML = buildItemCard(0);
+  updateItemCount();
+}
+
+function addNPOItem() {
+  npoItemCounter++;
+  var idx = npoItemCounter;
+  npoActiveItems.push(idx);
+  var container = document.getElementById('npo_itemsContainer');
+  var div = document.createElement('div');
+  div.innerHTML = buildItemCard(idx);
+  container.appendChild(div.firstChild);
+  updateItemCount();
+  document.getElementById('npo_item_'+idx).scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function removeNPOItem(idx) {
+  var card = document.getElementById('npo_item_'+idx);
+  if (card) card.remove();
+  npoActiveItems = npoActiveItems.filter(function(i){ return i !== idx; });
+  updateItemCount();
+}
+
+function updateItemCount() {
+  var n = npoActiveItems.length;
+  document.getElementById('npo_itemCount').textContent = n + (n === 1 ? ' item' : ' items');
+}
+
+function resetNewPOForm() {
+  ['npo_clientType','npo_poNo','npo_clientName','npo_poDate'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) { el.tagName === 'SELECT' ? el.selectedIndex = 0 : el.value = ''; }
+  });
+  initNPOItems();
+}
+
+function submitNewPO() {
+  var clientType = document.getElementById('npo_clientType').value.trim();
+  var poNo       = document.getElementById('npo_poNo').value.trim();
+  var clientName = document.getElementById('npo_clientName').value.trim();
+  var poDate     = document.getElementById('npo_poDate').value;
+
+  var hMissing = [];
+  if (!clientType) hMissing.push('Client Type');
+  if (!poNo)       hMissing.push('PO No.');
+  if (!clientName) hMissing.push('Client Name');
+  if (!poDate)     hMissing.push('PO Date');
+  if (hMissing.length > 0) { toast('Required: ' + hMissing.join(', '), 'error'); return; }
+
+  var items   = [];
+  var itemErr = '';
+  for (var i = 0; i < npoActiveItems.length; i++) {
+    var idx     = npoActiveItems[i];
+    var cons    = document.getElementById('npo_cons_'+idx)    ? document.getElementById('npo_cons_'+idx).value.trim()    : '';
+    var cat     = document.getElementById('npo_cat_'+idx)     ? document.getElementById('npo_cat_'+idx).value.trim()     : '';
+    var deldate = document.getElementById('npo_deldate_'+idx) ? document.getElementById('npo_deldate_'+idx).value         : '';
+    var uom     = document.getElementById('npo_uom_'+idx)     ? document.getElementById('npo_uom_'+idx).value.trim()     : '';
+    var prod    = document.getElementById('npo_prod_'+idx)    ? document.getElementById('npo_prod_'+idx).value.trim()    : '';
+    var qty     = document.getElementById('npo_qty_'+idx)     ? document.getElementById('npo_qty_'+idx).value.trim()     : '';
+    var rate    = document.getElementById('npo_rate_'+idx)    ? document.getElementById('npo_rate_'+idx).value.trim()    : '';
+    var iMissing = [];
+    if (!cons)    iMissing.push('Consignee');
+    if (!cat)     iMissing.push('Category');
+    if (!deldate) iMissing.push('Delivery Date');
+    if (!uom)     iMissing.push('UOM');
+    if (!prod)    iMissing.push('PO Product');
+    if (!qty)     iMissing.push('Qty');
+    if (!rate)    iMissing.push('Rate');
+    if (iMissing.length > 0) { itemErr = 'Item '+(i+1)+': missing '+iMissing.join(', '); break; }
+    items.push({ consignee:cons, category:cat, deliveryDate:deldate, uom:uom, product:prod, qty:qty, rate:rate });
+  }
+  if (itemErr) { toast(itemErr, 'error'); return; }
+  if (items.length === 0) { toast('Add at least one item', 'error'); return; }
+
+  var payload = { clientType:clientType, poNo:poNo, clientName:clientName, poDate:poDate, items:items };
+  var btn     = document.getElementById('npoSubmitBtn');
+  btn.disabled = true; btn.innerHTML = '<span>⏳</span> Saving '+items.length+' item(s)...';
+  loading(true);
+
+  google.script.run
+    .withSuccessHandler(function(result) {
+      loading(false); btn.disabled = false;
+      btn.innerHTML = '<span>💾</span> Save All to Google Sheets';
+      if (result.success) {
+        toast('✅ '+result.count+' item(s) saved for PO: '+poNo, 'success');
+        resetNewPOForm();
+        pendingData   = [];
+        completedData = [];
+        loadPendingData();
+      } else {
+        toast('Error: ' + result.message, 'error');
+      }
+    })
+    .withFailureHandler(function(error) {
+      loading(false); btn.disabled = false;
+      btn.innerHTML = '<span>💾</span> Save All to Google Sheets';
+      toast('Failed: ' + error.message, 'error');
+    })
+    .submitNewPO(payload);
+}
+</script>
+</body>
+</html>

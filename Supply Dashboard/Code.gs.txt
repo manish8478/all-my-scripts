@@ -1,0 +1,481 @@
+// ============================================================
+//  Supply Management System - Backend (Code.gs)
+//  Sheets needed:
+//    "Users"          - Col A: Username, Col B: Password
+//    "Pending items"  - Source data for pending orders
+//    "Supplied status"- Output sheet for supply data
+//    "Sales report"   - Sales data sheet
+//    "Completed"      - Completed orders data sheet (NEW)
+// ============================================================
+
+// ── Serve HTML page ──────────────────────────────────────────
+function doGet() {
+  return HtmlService.createHtmlOutputFromFile('Index')
+    .setTitle('Supply Management System')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+// ════════════════════════════════════════════════════════════
+//  LOGIN
+// ════════════════════════════════════════════════════════════
+function handleLogin(username, password) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var usersSheet = ss.getSheetByName('Users');
+    if (!usersSheet) {
+      return { success: false, message: "'Users' sheet not found. Create it with Username and Password columns." };
+    }
+    var data = usersSheet.getDataRange().getValues();
+    for (var i = 1; i < data.length; i++) {
+      var uname = String(data[i][0]).trim();
+      var upass  = String(data[i][1]).trim();
+      if (uname.toLowerCase() === username.toLowerCase() && upass === password) {
+        return { success: true, username: uname };
+      }
+    }
+    return { success: false, message: "Invalid username or password" };
+  } catch (e) {
+    return { success: false, message: e.toString() };
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+//  GET PO NUMBERS (for dropdown)
+// ════════════════════════════════════════════════════════════
+function getPONumbers() {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sh = ss.getSheetByName('Pending items');
+    if (!sh) { Logger.log('ERROR: Sheet "Pending items" not found'); return []; }
+    var lr = sh.getLastRow();
+    if (lr < 2) return [];
+    var values = sh.getRange(2, 2, lr - 1, 1).getValues();
+    var uniquePOs = [...new Set(values.flat().filter(v => v && v.toString().trim() !== ''))];
+    return uniquePOs;
+  } catch (e) {
+    Logger.log('ERROR in getPONumbers: ' + e.toString());
+    return [];
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+//  GET PO DETAILS (when PO is selected)
+// ════════════════════════════════════════════════════════════
+function getPODetails(poNo) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sh = ss.getSheetByName('Pending items');
+    if (!sh) throw new Error('Sheet "Pending items" not found');
+    var data = sh.getDataRange().getValues();
+    var clients = [], consignees = [], categories = [], deliveries = [], products = [];
+    for (var i = 1; i < data.length; i++) {
+      var rowPO   = data[i][1] ? data[i][1].toString().trim() : '';
+      var searchPO = poNo.toString().trim();
+      if (rowPO === searchPO) {
+        if (data[i][2]) clients.push(data[i][2].toString().trim());
+        if (data[i][3]) consignees.push(data[i][3].toString().trim());
+        if (data[i][6]) categories.push(data[i][6].toString().trim());
+        if (data[i][5]) {
+          var deliveryDate = data[i][5];
+          if (deliveryDate instanceof Date) {
+            deliveryDate = Utilities.formatDate(deliveryDate, Session.getScriptTimeZone(), 'dd/MM/yyyy');
+          }
+          deliveries.push(deliveryDate);
+        }
+        if (data[i][7]) products.push(data[i][7].toString().trim());
+      }
+    }
+    return {
+      clients:    [...new Set(clients)],
+      consignees: [...new Set(consignees)],
+      categories: [...new Set(categories)],
+      deliveries: [...new Set(deliveries)],
+      products:   [...new Set(products)]
+    };
+  } catch (e) {
+    Logger.log('ERROR in getPODetails: ' + e.toString());
+    throw e;
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+//  SUBMIT SUPPLY DATA
+// ════════════════════════════════════════════════════════════
+function submitSupplyData(formData) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var outputSheet = ss.getSheetByName('Supplied status');
+    if (!outputSheet) {
+      outputSheet = ss.insertSheet('Supplied status');
+      outputSheet.getRange(1, 1, 1, 9).setValues([[
+        'Po No.', 'Client name', 'Product category', 'Consignee',
+        'Supplied Qty.', 'UOM', 'Supplied Date', 'PO Product', 'Delivery Period'
+      ]]);
+      outputSheet.getRange(1, 1, 1, 9)
+        .setFontWeight('bold').setBackground('#4a86e8').setFontColor('#ffffff');
+    }
+    var deliveryDate = formData.delivery;
+    if (typeof deliveryDate === 'string' && deliveryDate.includes('/')) {
+      var parts = deliveryDate.split('/');
+      deliveryDate = new Date(parts[2], parts[1] - 1, parts[0]);
+    }
+    var rowData = [
+      formData.poNo, formData.client, formData.category, formData.consignee,
+      formData.qty, formData.uom, formData.date, formData.product, deliveryDate
+    ];
+    outputSheet.appendRow(rowData);
+    var newRow = outputSheet.getLastRow();
+    outputSheet.getRange(newRow, 9).setNumberFormat('dd/MM/yyyy');
+    return { success: true, message: 'Data saved successfully' };
+  } catch (error) {
+    Logger.log('ERROR in submitSupplyData: ' + error.toString());
+    return { success: false, message: error.toString() };
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+//  HELPER — Parse Balance Qty from a row
+//  Looks for a column named "Balance", "Balance Qty", "Bal Qty"
+//  or calculates = PO Qty - Supplied Qty if both exist
+// ════════════════════════════════════════════════════════════
+function getBalanceQty_(headers, rowValues) {
+  // First try: look for an explicit "Balance" / "Balance Qty" column
+  var balanceKeys = ['balance qty', 'balance quantity', 'balance', 'bal qty', 'bal. qty', 'pending qty', 'remaining qty'];
+  for (var j = 0; j < headers.length; j++) {
+    var hl = String(headers[j]).toLowerCase().trim();
+    for (var k = 0; k < balanceKeys.length; k++) {
+      if (hl === balanceKeys[k]) {
+        var v = parseFloat(rowValues[j]);
+        return isNaN(v) ? null : v;
+      }
+    }
+  }
+  // Second try: look for formula-derived column header containing "balance"
+  for (var j = 0; j < headers.length; j++) {
+    var hl = String(headers[j]).toLowerCase().trim();
+    if (hl.indexOf('balance') !== -1) {
+      var v = parseFloat(rowValues[j]);
+      return isNaN(v) ? null : v;
+    }
+  }
+  return null; // couldn't determine
+}
+
+// ════════════════════════════════════════════════════════════
+//  GET PENDING ITEMS DATA  (balance qty > 0 or unknown)
+// ════════════════════════════════════════════════════════════
+function getPendingItems() {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sh = ss.getSheetByName('Pending items');
+    if (!sh) return { success: false, message: "'Pending items' sheet not found" };
+    var data = sh.getDataRange().getValues();
+    if (data.length <= 1) return { success: true, headers: [], rows: [] };
+    var headers = data[0];
+    var rows = [];
+    for (var i = 1; i < data.length; i++) {
+      // Skip row if Col B (PO No., index 1) is blank — handles formula-only rows in col L+
+      var poVal = data[i][1];
+      if (poVal === '' || poVal === null || poVal === undefined) continue;
+
+      // Check balance qty — if exactly 0, skip (completed)
+      var balQty = getBalanceQty_(headers, data[i]);
+      if (balQty !== null && balQty <= 0) continue; // completed — exclude from pending
+
+      var row = {};
+      for (var j = 0; j < headers.length; j++) {
+        var value = data[i][j];
+        if (value instanceof Date) {
+          value = Utilities.formatDate(value, Session.getScriptTimeZone(), 'dd/MM/yyyy');
+        }
+        row[headers[j]] = value;
+      }
+      rows.push(row);
+    }
+    return { success: true, headers: headers, rows: rows };
+  } catch (e) {
+    return { success: false, message: e.toString() };
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+//  GET COMPLETED ITEMS DATA  (from "Completed" sheet)
+//  ← MODIFIED: Now reads directly from "Completed" sheet instead
+//    of filtering from "Pending items"
+// ════════════════════════════════════════════════════════════
+function getCompletedItems() {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sh = ss.getSheetByName('Completed');
+    
+    if (!sh) {
+      // "Completed" sheet doesn't exist
+      return { success: false, message: "'Completed' sheet not found" };
+    }
+
+    var data = sh.getDataRange().getValues();
+    
+    if (data.length <= 1) {
+      return { success: true, headers: data.length > 0 ? data[0] : [], rows: [] };
+    }
+
+    var headers = data[0];
+    var rows = [];
+
+    for (var i = 1; i < data.length; i++) {
+      // Skip completely blank rows
+      var isBlankRow = true;
+      for (var k = 0; k < data[i].length; k++) {
+        if (data[i][k] !== '' && data[i][k] !== null && data[i][k] !== undefined) {
+          isBlankRow = false;
+          break;
+        }
+      }
+      if (isBlankRow) continue;
+
+      var row = {};
+      for (var j = 0; j < headers.length; j++) {
+        var value = data[i][j];
+        // Format dates properly
+        if (value instanceof Date) {
+          value = Utilities.formatDate(value, Session.getScriptTimeZone(), 'dd/MM/yyyy');
+        }
+        row[headers[j]] = value;
+      }
+      rows.push(row);
+    }
+
+    Logger.log('getCompletedItems: successfully loaded ' + rows.length + ' rows from "Completed" sheet');
+    return { success: true, headers: headers, rows: rows };
+
+  } catch (e) {
+    Logger.log('ERROR in getCompletedItems: ' + e.toString());
+    return { success: false, message: 'Error loading completed items: ' + e.toString() };
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+//  GET SALES DATA
+//  Sheet: "Sales report"
+//  Expected headers:
+//    PO No. | Client Type | Client | Consignee | Division |
+//    Item   | Unit        | Qty.   | Basic Rate | Freight Rate |
+//    Basic Total Value | Dispatch date. | Month of dispatch
+// ════════════════════════════════════════════════════════════
+function getSalesData() {
+  try {
+    var ss    = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheetByName('Sales report');
+    if (!sheet) {
+      return { success: false, message: "'Sales report' sheet not found" };
+    }
+    var data = sheet.getDataRange().getValues();
+    if (data.length < 2) {
+      return { success: true, rows: [], headers: [] };
+    }
+    var headers = data[0].map(function(h) { return h ? h.toString().trim() : ''; });
+    var rows = [];
+    for (var i = 1; i < data.length; i++) {
+      var row = data[i];
+      // Skip completely empty rows
+      var isEmpty = row.every(function(cell) { return cell === '' || cell === null || cell === undefined; });
+      if (isEmpty) continue;
+      var obj = {};
+      for (var j = 0; j < headers.length; j++) {
+        var val = row[j];
+        // Format dates
+        if (val instanceof Date) {
+          val = Utilities.formatDate(val, Session.getScriptTimeZone(), 'dd/MM/yyyy');
+        }
+        // Convert numeric strings (handles comma-formatted numbers like "1,23,456")
+        if (typeof val === 'string') {
+          var cleaned = val.replace(/,/g, '').trim();
+          if (cleaned !== '' && !isNaN(cleaned)) {
+            val = parseFloat(cleaned);
+          }
+        }
+        obj[headers[j]] = val;
+      }
+      rows.push(obj);
+    }
+    Logger.log('getSalesData: returned ' + rows.length + ' rows');
+    if (rows.length > 0) Logger.log('First row keys: ' + JSON.stringify(Object.keys(rows[0])));
+    return { success: true, rows: rows, headers: headers };
+  } catch (e) {
+    Logger.log('ERROR in getSalesData: ' + e.toString());
+    return { success: false, message: e.toString() };
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+//  GET SUPPLIED STATUS DATA
+// ════════════════════════════════════════════════════════════
+function getSuppliedStatus() {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sh = ss.getSheetByName('Supplied status');
+    if (!sh) return { success: false, message: "'Supplied status' sheet not found" };
+    var data = sh.getDataRange().getValues();
+    if (data.length <= 1) return { success: true, headers: [], rows: [] };
+    var headers = data[0];
+    var rows = [];
+    for (var i = 1; i < data.length; i++) {
+      var row = {};
+      for (var j = 0; j < headers.length; j++) {
+        var value = data[i][j];
+        if (value instanceof Date) {
+          value = Utilities.formatDate(value, Session.getScriptTimeZone(), 'dd/MM/yyyy');
+        }
+        row[headers[j]] = value;
+      }
+      rows.push(row);
+    }
+    return { success: true, headers: headers, rows: rows };
+  } catch (e) {
+    return { success: false, message: e.toString() };
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+//  GET UNIQUE FILTER VALUES
+// ════════════════════════════════════════════════════════════
+function getFilterOptions(sheetName) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sh = ss.getSheetByName(sheetName);
+    if (!sh) return { clients: [], products: [], categories: [] };
+    var data = sh.getDataRange().getValues();
+    if (data.length <= 1) return { clients: [], products: [], categories: [] };
+    var clients = new Set(), products = new Set(), categories = new Set();
+    if (sheetName === 'Supplied status') {
+      for (var i = 1; i < data.length; i++) {
+        if (data[i][1]) clients.add(data[i][1].toString().trim());
+        if (data[i][2]) categories.add(data[i][2].toString().trim());
+        if (data[i][7]) products.add(data[i][7].toString().trim());
+      }
+    } else {
+      for (var i = 1; i < data.length; i++) {
+        if (data[i][2]) clients.add(data[i][2].toString().trim());
+        if (data[i][6]) categories.add(data[i][6].toString().trim());
+        if (data[i][7]) products.add(data[i][7].toString().trim());
+      }
+    }
+    return {
+      clients:    Array.from(clients).sort(),
+      products:   Array.from(products).sort(),
+      categories: Array.from(categories).sort()
+    };
+  } catch (e) {
+    Logger.log('ERROR in getFilterOptions: ' + e.toString());
+    return { clients: [], products: [], categories: [] };
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+//  SUBMIT NEW PO  →  Pending Items sheet  (multi-item support)
+//  Payload: { clientType, poNo, clientName, consignee, poDate,
+//             items: [{ category, deliveryDate, uom, product, qty, rate }, ...] }
+//  Columns A–K written per item row; col L+ left untouched.
+//  Next empty row = one row AFTER the last row that has data in col B.
+//  This avoids false "blank" rows caused by formula-only rows in col L+.
+// ════════════════════════════════════════════════════════════
+function submitNewPO(payload) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sh = ss.getSheetByName('Pending items');
+    if (!sh) return { success: false, message: "'Pending items' sheet not found" };
+
+    var items = payload.items || [];
+    if (items.length === 0) return { success: false, message: 'No items provided' };
+
+    function parseDate(str) {
+      if (!str) return '';
+      var p = str.split('-');
+      if (p.length === 3) return new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+      return str;
+    }
+
+    var poDate = parseDate(payload.poDate);
+
+    // ── FIXED: Find startRow by scanning col B bottom-up ──────────────
+    // getLastRow() returns a row far down due to formulas in col L+.
+    // We scan col B from the bottom upward to find the true last data row,
+    // then write one row below it. This prevents overwriting existing data.
+    var sheetLastRow = sh.getLastRow();
+    var startRow = 2; // fallback: write from row 2 if sheet is empty
+
+    if (sheetLastRow >= 2) {
+      var colBVals = sh.getRange(2, 2, sheetLastRow - 1, 1).getValues();
+      // Scan from bottom upward — find last non-empty B cell
+      for (var r = colBVals.length - 1; r >= 0; r--) {
+        var v = colBVals[r][0];
+        if (v !== '' && v !== null && v !== undefined) {
+          startRow = r + 2 + 1; // r is 0-indexed from row 2, so actual row = r+2; next row = r+2+1
+          break;
+        }
+      }
+    }
+    // ─────────────────────────────────────────────────────────────────
+
+    Logger.log('submitNewPO: writing ' + items.length + ' items starting at row ' + startRow);
+
+    var rowsData = [];
+    for (var i = 0; i < items.length; i++) {
+      var it = items[i];
+      rowsData.push([
+        payload.clientType,            // A - Client Type
+        payload.poNo,                  // B - PO No.
+        payload.clientName,            // C - Client name
+        it.consignee,                  // D - Consignee (per item)
+        poDate,                        // E - PO Date
+        parseDate(it.deliveryDate),    // F - PO Delivery Date
+        it.category,                   // G - Product Category
+        it.product,                    // H - PO Product
+        parseFloat(it.qty)  || 0,      // I - PO Qty.
+        it.uom,                        // J - UOM
+        parseFloat(it.rate) || 0       // K - PO Rate
+      ]);
+    }
+
+    sh.getRange(startRow, 1, rowsData.length, 11).setValues(rowsData);
+    // Data write hone ke baad formula lagao
+for (var j = 0; j < rowsData.length; j++) {
+  var row = startRow + j;
+
+  var kValue = sh.getRange(row, 11).getValue();
+
+  if (kValue !== "" && kValue !== null) {
+
+    // Column L
+    sh.getRange(row, 12).setFormula(
+      '=IFNA(SUMIFS(\'Supplied status\'!E:E,\'Supplied status\'!A:A,B' + row + ',\'Supplied status\'!H:H,H' + row + ',\'Supplied status\'!C:C,G' + row + ',\'Supplied status\'!I:I,F' + row + ',\'Supplied status\'!D:D,D' + row + '),"")'
+    );
+
+    // Column M
+    sh.getRange(row, 13).setFormula(
+      '=IF(I' + row + '="","",I' + row + '-L' + row + ')'
+    );
+
+    // Column N
+    sh.getRange(row, 14).setFormula(
+      '=IF(K' + row + '="","",M' + row + '*K' + row + ')'
+    );
+  }
+}
+
+    for (var j = 0; j < rowsData.length; j++) {
+      var rn = startRow + j;
+      sh.getRange(rn, 5).setNumberFormat('dd/MM/yyyy');  // E PO Date
+      sh.getRange(rn, 6).setNumberFormat('dd/MM/yyyy');  // F Delivery Date
+      sh.getRange(rn, 9).setNumberFormat('#,##0.##');    // I Qty
+      sh.getRange(rn, 11).setNumberFormat('#,##0.##');   // K Rate
+    }
+
+    Logger.log('submitNewPO: success — saved ' + items.length + ' rows from row ' + startRow);
+    return { success: true, count: items.length, startRow: startRow };
+
+  } catch (e) {
+    Logger.log('ERROR in submitNewPO: ' + e.toString());
+    return { success: false, message: e.toString() };
+  }
+}
