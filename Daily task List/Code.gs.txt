@@ -1,0 +1,599 @@
+// ============================================================
+//  Code.gs  —  Task Manager Web App
+//  Required Sheet tabs:
+//    "Users"           -> Col A: Username, Col B: Password (Row 1 = header)
+//    "Master"          -> Col A: Task Id, B: Name, C: Task, D: Plan Date,
+//                        E: Actual Date, F: Pending For Approval, G: Remarks,
+//                        H: Status, I: Actual pending task timestamp
+//    "Incomplete_task" -> Col A: Task Id, B: Name, C: Freq, D: Task, E: Plan Date
+//    "Prateek Saraogi" -> Col A: Task Id, B: Name, C: Task, D: Plan Date,
+//                        E: Actual Date, F: Pending For Approval,
+//                        G: Status (Done dropdown), H: Actual time (auto timestamp)
+//    "Status Form"     -> Col A: Task Id, B: Timestamp, C: Task Status, D: Pending for Approval
+// ============================================================
+
+var USERS_SHEET       = "Users";
+var TASKLIST_SHEET_ID = "1kA-GD9eOhEKVZ1kTNGazuI7roZfkTjSs3MkoHVl0AG8";
+var TASKLIST_GID      = 0;
+var STATUS_FORM_SHEET = "Status Form";
+var MASTER_SHEET      = "Master";
+var DIRECTOR_SHEET    = "Prateek Saraogi";
+
+// ── Merged Data sheet config ──────────────────────────────────
+var MERGED_SHEET_ID   = "1bmF1nKPugOgrhMsed2jbfDD_-f-RJU3pBesr9hpNwNo";
+var MERGED_SHEET_NAME = "Merged data";
+
+// ════════════════════════════════════════════════════════════
+//  GET handler
+// ════════════════════════════════════════════════════════════
+function doGet(e) {
+  var action = (e.parameter && e.parameter.action) ? e.parameter.action : "home";
+
+  if (action === "login")              return handleLogin(e.parameter.username, e.parameter.password);
+  if (action === "getTasks")           return handleGetTasks();
+  if (action === "getEmployees")       return handleGetEmployees();
+  if (action === "getIncompleteTasks") return handleGetIncompleteTasks();
+  if (action === "getDirectorTasks")   return handleGetDirectorTasks();
+  if (action === "getDirectorsTasklist") return handleGetDirectorsTasklist();
+  if (action === "getMergedStats")     return handleGetMergedStats();   // ← NEW
+
+  if (action === "markDirectorsTaskDone") {
+    try {
+      var payload = JSON.parse(e.parameter.data || "{}");
+      return handleMarkDirectorsTaskDone(payload);
+    } catch(err) {
+      return jsonOut({ success: false, message: "Invalid data: " + err.toString() });
+    }
+  }
+
+  if (action === "addToCalendar") {
+    try {
+      var payload = JSON.parse(e.parameter.data || "{}");
+      return handleAddToCalendar(payload);
+    } catch(err) {
+      return jsonOut({ success: false, message: "Invalid data: " + err.toString() });
+    }
+  }
+
+  if (action === "updateDirectorStatus") {
+    try {
+      var payload = JSON.parse(e.parameter.data || "{}");
+      return handleUpdateDirectorStatus(payload);
+    } catch(err) {
+      return jsonOut({ success: false, message: "Invalid data: " + err.toString() });
+    }
+  }
+
+  if (action === "addTask") {
+    try {
+      var payload = JSON.parse(e.parameter.data || "{}");
+      return handleAddTask(payload);
+    } catch(err) {
+      return jsonOut({ success: false, message: "Invalid data: " + err.toString() });
+    }
+  }
+
+  return HtmlService.createHtmlOutputFromFile("Index")
+    .setTitle("Task Manager Pro")
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+// ════════════════════════════════════════════════════════════
+//  POST handler
+// ════════════════════════════════════════════════════════════
+function doPost(e) {
+  try {
+    var data = JSON.parse(e.postData.contents);
+    if (data.action === "addTask")               return handleAddTask(data);
+    if (data.action === "updateDirectorStatus")  return handleUpdateDirectorStatus(data);
+    if (data.action === "markDirectorsTaskDone") return handleMarkDirectorsTaskDone(data);
+    if (data.action === "addToCalendar")         return handleAddToCalendar(data);
+    return jsonOut({ success: false, message: "Unknown action" });
+  } catch(err) {
+    return jsonOut({ success: false, message: "Parse error: " + err.toString() });
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+//  LOGIN
+// ════════════════════════════════════════════════════════════
+function handleLogin(username, password) {
+  if (!username || !password)
+    return jsonOut({ success: false, message: "Username and password required" });
+
+  var ss    = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(USERS_SHEET);
+  if (!sheet) return jsonOut({ success: false, message: "'Users' tab not found." });
+
+  var data = sheet.getDataRange().getValues();
+  for (var i = 1; i < data.length; i++) {
+    var uname = String(data[i][0]).trim();
+    var upass = String(data[i][1]).trim();
+    if (uname.toLowerCase() === username.toLowerCase() && upass === password)
+      return jsonOut({ success: true, message: "Login successful", username: uname });
+  }
+  return jsonOut({ success: false, message: "Invalid username or password" });
+}
+
+// ════════════════════════════════════════════════════════════
+//  GET MERGED STATS — External "Merged data" sheet
+//  Reads the LAST row (summary row) from the sheet.
+//  Expected columns (auto-detected by header keywords):
+//    Total Tasks | On Time | Delayed/Missed
+//    % Work on Time  |  % Work Delayed/Missed
+// ════════════════════════════════════════════════════════════
+function handleGetMergedStats() {
+  try {
+    var extSS = SpreadsheetApp.openById(MERGED_SHEET_ID);
+    var sheet = extSS.getSheetByName(MERGED_SHEET_NAME);
+    if (!sheet) {
+      // fallback: try first sheet
+      sheet = extSS.getSheets()[0];
+    }
+    if (!sheet) return jsonOut({ success: false, message: "'Merged data' sheet not found." });
+
+    var lastRow = sheet.getLastRow();
+    var lastCol = sheet.getLastColumn();
+    if (lastRow < 2) return jsonOut({ success: false, message: "No data in Merged data sheet." });
+
+    // Read headers (row 1)
+    var headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(function(h){ return String(h).trim(); });
+
+    // Find column indices (0-based) by keyword matching
+    function findCol(keywords) {
+      for (var i = 0; i < headers.length; i++) {
+        var h = headers[i].toLowerCase();
+        var matched = keywords.every(function(kw){ return h.indexOf(kw.toLowerCase()) !== -1; });
+        if (matched) return i;
+      }
+      return -1;
+    }
+
+    var iTotal   = findCol(['total']);
+    var iOnTime  = findCol(['on', 'time']);
+    // Exclude % columns for raw counts
+    var iDelayed = -1;
+    for (var i = 0; i < headers.length; i++) {
+      var h = headers[i].toLowerCase();
+      if ((h.indexOf('delay') !== -1 || h.indexOf('miss') !== -1) && h.indexOf('%') === -1) {
+        iDelayed = i; break;
+      }
+    }
+    var iPctOnTime = -1;
+    for (var i = 0; i < headers.length; i++) {
+      var h = headers[i].toLowerCase();
+      if (h.indexOf('%') !== -1 && h.indexOf('on') !== -1 && h.indexOf('time') !== -1) {
+        iPctOnTime = i; break;
+      }
+    }
+    var iPctDelay = -1;
+    for (var i = 0; i < headers.length; i++) {
+      var h = headers[i].toLowerCase();
+      if (h.indexOf('%') !== -1 && (h.indexOf('delay') !== -1 || h.indexOf('miss') !== -1)) {
+        iPctDelay = i; break;
+      }
+    }
+
+    // Read ALL data rows and SUM them up
+    var dataRows = sheet.getRange(2, 1, lastRow - 1, lastCol).getValues();
+
+    var totalTasks = 0, onTime = 0, delayed = 0, pctOnTime = 0, pctDelay = 0, rowCount = 0;
+
+    dataRows.forEach(function(row) {
+      // Skip completely empty rows
+      var hasData = row.some(function(c){ return c !== '' && c !== null; });
+      if (!hasData) return;
+      rowCount++;
+      if (iTotal   >= 0) totalTasks += toNum(row[iTotal]);
+      if (iOnTime  >= 0) onTime     += toNum(row[iOnTime]);
+      if (iDelayed >= 0) delayed    += toNum(row[iDelayed]);
+      if (iPctOnTime >= 0) pctOnTime += toNum(row[iPctOnTime]);
+      if (iPctDelay  >= 0) pctDelay  += toNum(row[iPctDelay]);
+    });
+
+    // Average the percentages
+    var avgPctOnTime = rowCount > 0 ? Math.round((pctOnTime / rowCount) * 100) / 100 : 0;
+    var avgPctDelay  = rowCount > 0 ? Math.round((pctDelay  / rowCount) * 100) / 100 : 0;
+
+    return jsonOut({
+      success    : true,
+      totalTasks : totalTasks,
+      onTime     : onTime,
+      delayed    : delayed,
+      pctOnTime  : avgPctOnTime,
+      pctDelay   : avgPctDelay,
+      headers    : headers,   // for debugging
+      rowCount   : rowCount
+    });
+
+  } catch(err) {
+    return jsonOut({ success: false, message: "Error reading Merged data: " + err.toString() });
+  }
+}
+
+function toNum(v) {
+  if (v === null || v === '' || v === undefined) return 0;
+  var n = parseFloat(String(v).replace('%','').trim());
+  return isNaN(n) ? 0 : n;
+}
+
+// ════════════════════════════════════════════════════════════
+//  GET TASKS — Master sheet
+// ════════════════════════════════════════════════════════════
+function handleGetTasks() {
+  var ss    = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(MASTER_SHEET);
+  if (!sheet) return jsonOut({ success: false, message: "'Master' tab not found." });
+
+  var data = sheet.getDataRange().getValues();
+  if (data.length <= 1) return jsonOut({ success: true, rows: [], incompleteRows: [] });
+
+  var rows = [];
+  for (var i = 1; i < data.length; i++) {
+    var row = data[i];
+    if (!row[0] && !row[1] && !row[2]) continue;
+    rows.push({
+      taskId         : row[0],
+      name           : row[1],
+      task           : row[2],
+      planDate       : formatDateVal(row[3]),
+      actualDate     : formatDateVal(row[4]),
+      pendingApproval: row[5],
+      remarks        : row[6],
+      status         : row[7] || "Pending",
+      timestamp      : formatDateVal(row[8])
+    });
+  }
+
+  // Also read Incomplete_task sheet
+  var incompleteRows = [];
+  var incSheet = ss.getSheetByName("Incomplete_task");
+  if (incSheet) {
+    var incData = incSheet.getDataRange().getValues();
+    for (var j = 1; j < incData.length; j++) {
+      var r = incData[j];
+      if (!r[0] && !r[1] && !r[3]) continue;
+      incompleteRows.push({
+        taskId   : r[0] || "",
+        name     : r[1] || "",
+        freq     : r[2] || "",
+        task     : r[3] || "",
+        planDate : formatDateVal(r[4])
+      });
+    }
+  }
+
+  return jsonOut({ success: true, rows: rows, incompleteRows: incompleteRows });
+}
+
+// ════════════════════════════════════════════════════════════
+//  GET EMPLOYEES
+// ════════════════════════════════════════════════════════════
+function handleGetEmployees() {
+  var ss       = SpreadsheetApp.getActiveSpreadsheet();
+  var empSheet = ss.getSheetByName("Employees");
+  var employees = [];
+
+  if (empSheet) {
+    var data = empSheet.getDataRange().getValues();
+    for (var i = 1; i < data.length; i++) {
+      if (data[i][0]) employees.push(String(data[i][0]).trim());
+    }
+  }
+
+  if (employees.length === 0) {
+    employees = [
+      "ANAND KUMAR PANDEY","ADITYA PRADHAN","BAJRANG LAL AGARWAL",
+      "RADHA BHATTACHARJEE","VIDYA SHANKAR PANDEY","SURESH PANDEY","PRAKASH KUMAR BEHERA","PRIYANKA SHAW",
+      "Rajat Rampuria","RAVI SINGH","SMITA SAHA PAUL","MANISH KUMAR MONDAL",
+      "Surojit Roy","VINIT AGARWAL","MD ZAFAR HASIB","MANISH MORE",
+      "D.K Agarwal","Manjeet Verma","Prateek Saraogi"
+    ];
+  }
+
+  return jsonOut({ success: true, employees: employees });
+}
+
+// ════════════════════════════════════════════════════════════
+//  GET INCOMPLETE TASKS
+// ════════════════════════════════════════════════════════════
+function handleGetIncompleteTasks() {
+  var ss    = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName("Incomplete_task");
+  if (!sheet) return jsonOut({ success: false, message: "'Incomplete_task' tab not found." });
+
+  var lastRow = sheet.getLastRow();
+  var lastCol = sheet.getLastColumn();
+  if (lastRow <= 1) return jsonOut({ success: true, rows: [] });
+
+  var data = sheet.getRange(1, 1, lastRow, Math.max(lastCol, 5)).getValues();
+  var rows = [];
+  for (var i = 1; i < data.length; i++) {
+    var row  = data[i];
+    var name = row[1] != null ? String(row[1]).trim() : "";
+    var task = row[3] != null ? String(row[3]).trim() : "";
+    if (!name && !task) continue;
+    rows.push({
+      taskId   : row[0] != null ? String(row[0]).trim() : "",
+      name     : name,
+      freq     : row[2] != null ? String(row[2]).trim() : "",
+      task     : task,
+      planDate : formatDateVal(row[4])
+    });
+  }
+
+  return jsonOut({ success: true, rows: rows, total: rows.length });
+}
+
+// ════════════════════════════════════════════════════════════
+//  GET DIRECTOR TASKS — "Prateek Saraogi" sheet
+// ════════════════════════════════════════════════════════════
+function handleGetDirectorTasks() {
+  var ss    = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(DIRECTOR_SHEET);
+  if (!sheet) return jsonOut({ success: false, message: "'Prateek Saraogi' sheet not found." });
+
+  var lastRow = sheet.getLastRow();
+  if (lastRow <= 1) return jsonOut({ success: true, rows: [] });
+
+  var data = sheet.getRange(1, 1, lastRow, 8).getValues();
+  var rows = [];
+  for (var i = 1; i < data.length; i++) {
+    var row = data[i];
+    if (!row[0] && !row[1] && !row[2]) continue;
+    rows.push({
+      rowIndex        : i + 1,
+      taskId          : row[0] != null ? String(row[0]).trim() : "",
+      name            : row[1] != null ? String(row[1]).trim() : "",
+      task            : row[2] != null ? String(row[2]).trim() : "",
+      planDate        : formatDateVal(row[3]),
+      actualDate      : formatDateVal(row[4]),
+      pendingApproval : row[5] != null ? String(row[5]).trim() : "",
+      status          : row[6] != null ? String(row[6]).trim() : "",
+      actualTime      : formatActualTime(row[7])
+    });
+  }
+
+  return jsonOut({ success: true, rows: rows });
+}
+
+// ════════════════════════════════════════════════════════════
+//  UPDATE DIRECTOR STATUS
+// ════════════════════════════════════════════════════════════
+function handleUpdateDirectorStatus(data) {
+  var rowIndex = parseInt(data.rowIndex);
+  if (!rowIndex || rowIndex < 2)
+    return jsonOut({ success: false, message: "Invalid row index" });
+
+  var ss    = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(DIRECTOR_SHEET);
+  if (!sheet) return jsonOut({ success: false, message: "'Prateek Saraogi' sheet not found." });
+
+  sheet.getRange(rowIndex, 7).setValue("Done");
+  var ts = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm");
+  sheet.getRange(rowIndex, 8).setValue(ts);
+
+  return jsonOut({ success: true, message: "Marked as Done", timestamp: ts });
+}
+
+// ════════════════════════════════════════════════════════════
+//  ADD TASK — Writes to Master sheet
+// ════════════════════════════════════════════════════════════
+function handleAddTask(data) {
+  var ss    = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(MASTER_SHEET);
+  if (!sheet) return jsonOut({ success: false, message: "'Master' tab not found." });
+
+  var empName = data.employeeName;
+  var tasks   = data.tasks;
+  if (!empName || !tasks || tasks.length === 0)
+    return jsonOut({ success: false, message: "Employee name or tasks missing" });
+
+  var nextRow = sheet.getLastRow() + 1;
+  if (nextRow < 2) nextRow = 2;
+
+  var addedCount = 0;
+  for (var i = 0; i < tasks.length; i++) {
+    var taskItem = tasks[i];
+    var taskText = "";
+    var planDate = "";
+
+    if (typeof taskItem === "object") {
+      taskText = taskItem.task     || "";
+      planDate = taskItem.planDate || "";
+    } else {
+      taskText = String(taskItem);
+      planDate = data.planDate || "";
+    }
+    if (!taskText.trim()) continue;
+
+    var cr = nextRow + addedCount;
+
+    sheet.getRange("A" + cr).setFormula('=IF(B' + cr + '<>"", ROW()-1, "")');
+    sheet.getRange("B" + cr).setValue(empName);
+    sheet.getRange("C" + cr).setValue(taskText);
+    sheet.getRange("D" + cr).setValue(planDate);
+    sheet.getRange("I" + cr).setFormula(
+      '=IF(C' + cr + '<>"",IF(G' + cr + '="No","",IF(J' + cr + '<>"","",IF(OR(F' + cr + '="",F' + cr + '<>""),"Pending",""))),"")');
+    sheet.getRange("L" + cr).setFormula(
+      '=IFERROR(VLOOKUP(A' + cr + ',Incomplete_task!A:N,14,0),"")');
+
+    addedCount++;
+  }
+
+  if (addedCount === 0) return jsonOut({ success: false, message: "No valid tasks found" });
+  return jsonOut({ success: true, message: addedCount + " task(s) successfully added!" });
+}
+
+// ════════════════════════════════════════════════════════════
+//  GET DIRECTORS TASKLIST — External sheet
+// ════════════════════════════════════════════════════════════
+function handleGetDirectorsTasklist() {
+  var taskSS = SpreadsheetApp.openById(TASKLIST_SHEET_ID);
+  var sheet  = taskSS.getSheets().filter(function(s){ return s.getSheetId() === TASKLIST_GID; })[0];
+  if (!sheet) sheet = taskSS.getSheets()[0];
+  if (!sheet) return jsonOut({ success: false, message: "Prateek_Saraogi sheet not found. Check Sheet ID." });
+
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) return jsonOut({ success: true, rows: [] });
+
+  var data = sheet.getRange(2, 4, lastRow - 1, 3).getValues();
+  var rows = [];
+  for (var i = 0; i < data.length; i++) {
+    var row      = data[i];
+    var taskId   = row[0] != null ? String(row[0]).trim() : "";
+    var task     = row[1] != null ? String(row[1]).trim() : "";
+    var deadline = formatDateVal(row[2]);
+    if (!taskId && !task) continue;
+    rows.push({ sheetRow: i + 2, taskId: taskId, task: task, deadline: deadline });
+  }
+
+  return jsonOut({ success: true, rows: rows });
+}
+
+// ════════════════════════════════════════════════════════════
+//  MARK DIRECTORS TASK DONE — Writes to "Status Form" sheet
+// ════════════════════════════════════════════════════════════
+function handleMarkDirectorsTaskDone(data) {
+  var taskId = String(data.taskId || "").trim();
+  if (!taskId) return jsonOut({ success: false, message: "Task ID missing" });
+
+  var ss          = SpreadsheetApp.getActiveSpreadsheet();
+  var statusSheet = ss.getSheetByName(STATUS_FORM_SHEET);
+  if (!statusSheet) return jsonOut({ success: false, message: "'Status Form' sheet not found." });
+
+  var nextRow = statusSheet.getLastRow() + 1;
+  var ts      = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm:ss");
+
+  statusSheet.getRange(nextRow, 1).setValue(taskId);
+  statusSheet.getRange(nextRow, 2).setValue(ts);
+  statusSheet.getRange(nextRow, 3).setValue("Done");
+  statusSheet.getRange(nextRow, 4).setValue("NO");
+
+  return jsonOut({ success: true, message: "Task marked as Done!", timestamp: ts, taskId: taskId });
+}
+
+// ════════════════════════════════════════════════════════════
+//  ADD TO GOOGLE CALENDAR
+// ════════════════════════════════════════════════════════════
+function handleAddToCalendar(data) {
+  Logger.log("Running user: " + Session.getActiveUser().getEmail());
+  Logger.log("handleAddToCalendar called: " + JSON.stringify(data));
+
+  if (!data) return jsonOut({ success: false, message: "Data parameter missing" });
+
+  var empName = data.employeeName;
+  var tasks   = data.tasks;
+  if (!empName || !tasks || tasks.length === 0)
+    return jsonOut({ success: false, message: "Employee name or tasks missing" });
+
+  var calendar = CalendarApp.getDefaultCalendar();
+  if (!calendar) {
+    return jsonOut({
+      success: false,
+      message: "Default calendar not accessible. Check script permissions."
+    });
+  }
+
+  var added  = [];
+  var failed = [];
+
+  for (var i = 0; i < tasks.length; i++) {
+    var taskItem = tasks[i];
+    var taskText = taskItem.task     || "";
+    var planDate = taskItem.planDate || "";
+    if (!taskText.trim()) continue;
+
+    try {
+      var parts     = planDate.split("/");
+      var eventDate = (parts.length === 3)
+        ? new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]))
+        : new Date();
+
+      var title       = "[Task] " + empName + " — " + taskText;
+      var description = "Assigned via Task Manager Pro\n"
+                      + "Employee: " + empName + "\n"
+                      + "Task: "     + taskText + "\n"
+                      + "Plan Date: " + planDate;
+
+      var event = calendar.createAllDayEvent(title, eventDate, { description: description });
+      Logger.log("Event created: " + event.getId());
+      added.push(taskText);
+    } catch (err) {
+      failed.push(taskText + " (" + err.toString() + ")");
+    }
+  }
+
+  if (added.length === 0)
+    return jsonOut({ success: false, message: "No events created. " + failed.join(", ") });
+
+  var msg = added.length + " event(s) added to your Google Calendar!";
+  if (failed.length > 0) msg += " | Failed: " + failed.join(", ");
+
+  return jsonOut({ success: true, message: msg, added: added });
+}
+
+// ════════════════════════════════════════════════════════════
+//  HELPERS
+// ════════════════════════════════════════════════════════════
+function jsonOut(obj) {
+  return ContentService
+    .createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function formatDateVal(val) {
+  if (!val) return "";
+  if (val instanceof Date) {
+    var d = val.getDate(), m = val.getMonth() + 1, y = val.getFullYear();
+    if (y < 1970) return "";
+    return pad(d) + "/" + pad(m) + "/" + y;
+  }
+  return String(val);
+}
+
+function formatActualTime(val) {
+  if (!val) return "";
+  if (val instanceof Date) {
+    var y = val.getFullYear();
+    if (y < 1970) return "";
+    return pad(val.getDate()) + "/" + pad(val.getMonth()+1) + "/" + y
+      + " " + pad(val.getHours()) + ":" + pad(val.getMinutes());
+  }
+  var s = String(val).trim();
+  var m = s.match(/^(\d{2}\/\d{2}\/\d{4})\s+(\d{2}:\d{2})/);
+  if (m) return m[1] + " " + m[2];
+  return s;
+}
+
+function pad(n) { return n < 10 ? "0" + n : String(n); }
+
+// ════════════════════════════════════════════════════════════
+//  TEST FUNCTIONS (run manually in Apps Script editor)
+// ════════════════════════════════════════════════════════════
+function testMergedStats() {
+  var result = handleGetMergedStats();
+  Logger.log(result.getContent());
+}
+
+function testPermission() {
+  var cal = CalendarApp.getDefaultCalendar();
+  cal.createAllDayEvent("Auth Test Event", new Date());
+}
+
+function testDefaultCalendar() {
+  var cal = CalendarApp.getDefaultCalendar();
+  if (cal) {
+    Logger.log("SUCCESS: Default Calendar found — " + cal.getName() + " (" + cal.getId() + ")");
+  } else {
+    Logger.log("FAIL: Default Calendar not accessible.");
+  }
+}
+
+function testAddTask() {
+  var result = handleAddTask({
+    employeeName: "Test Employee",
+    tasks: [{ task: "Test Task Description", planDate: "15/04/2025" }]
+  });
+  Logger.log(result.getContent());
+}
