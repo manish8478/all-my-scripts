@@ -1,0 +1,92 @@
+const SPREADSHEET_ID = '16G3IW4uUBLqEB1h1b25yM_LopadprTmFArj1NRXQRY4';
+const PVT_GID = 103702963;
+const RLY_GID = 630829614;
+
+function doGet() {
+  return HtmlService.createHtmlOutputFromFile('Index')
+    .setTitle('KSK Industries — Finance Dashboard')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+function checkLogin(username, password) {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const sheet = ss.getSheetByName("Users");
+    if (!sheet) return false;
+
+    const data = sheet.getDataRange().getValues();
+    for (let i = 1; i < data.length; i++) {
+      const sheetUser = String(data[i][0] || '').trim();
+      const sheetPass = String(data[i][1] || '').trim();
+      if (sheetUser === username.trim() && sheetPass === password.trim()) return true;
+    }
+    return false;
+  } catch (e) {
+    Logger.log("Login error: " + e.message);
+    return false;
+  }
+}
+
+// ✅ GID se sheet dhundne ka helper function
+function getSheetByGid(ss, gid) {
+  const sheets = ss.getSheets();
+  for (let i = 0; i < sheets.length; i++) {
+    if (sheets[i].getSheetId() === gid) return sheets[i];
+  }
+  return null;
+}
+
+function getDashboardData() {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+
+    // ✅ GID se directly sahi sheet lo
+    const pvtSheet = getSheetByGid(ss, PVT_GID);
+    const rlySheet = getSheetByGid(ss, RLY_GID);
+
+    if (!pvtSheet) throw new Error("Master Pvt. sheet (gid=" + PVT_GID + ") not found");
+    if (!rlySheet) throw new Error("Master Rly. sheet (gid=" + RLY_GID + ") not found");
+
+    Logger.log("Pvt sheet name: " + pvtSheet.getName());
+    Logger.log("Rly sheet name: " + rlySheet.getName());
+
+    const pvtData = pvtSheet.getRange(
+      1, 1,
+      pvtSheet.getLastRow(),
+      pvtSheet.getLastColumn()
+    ).getValues();
+
+    const rlyData = rlySheet.getRange(
+      1, 1,
+      rlySheet.getLastRow(),
+      rlySheet.getLastColumn()
+    ).getValues();
+
+    Logger.log("Pvt rows: " + pvtData.length + ", Rly rows: " + rlyData.length);
+
+    return {
+      pvt: sanitizeData(pvtData),
+      rly: sanitizeData(rlyData),
+      timestamp: new Date().getTime()
+    };
+
+  } catch (e) {
+    Logger.log("getDashboardData error: " + e.message);
+    throw new Error(e.message);
+  }
+}
+
+function sanitizeData(data) {
+  return data.map(row =>
+    row.map(cell => {
+      if (cell instanceof Date) {
+        const d = cell.getDate().toString().padStart(2, '0');
+        const m = (cell.getMonth() + 1).toString().padStart(2, '0');
+        const y = cell.getFullYear();
+        return d + '/' + m + '/' + y;
+      }
+      if (cell === null || cell === undefined) return '';
+      return cell;
+    })
+  );
+}

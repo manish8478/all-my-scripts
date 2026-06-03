@@ -1,0 +1,1313 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary:   #ffffff;
+      --bg-secondary: #fffdf0;
+      --bg-tertiary:  #fff9d6;
+      --yellow:       #f59e0b;
+      --yellow2:      #fbbf24;
+      --yellow3:      #fde68a;
+      --yellow4:      #fef3c7;
+      --amber-deep:   #d97706;
+      --amber-darker: #92400e;
+      --indigo:       #6366f1;
+      --indigo2:      #4f46e5;
+      --teal:         #14b8a6;
+      --emerald:      #10b981;
+      --rose:         #f43f5e;
+      --text-p:       #1c1917;
+      --text-s:       #57534e;
+      --text-m:       #a8a29e;
+      --border:       rgba(245,158,11,0.25);
+      --border2:      rgba(245,158,11,0.12);
+      --card:         rgba(255,253,240,0.92);
+      --glass:        rgba(255,255,255,0.7);
+      --sidebar-w:    200px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      background: linear-gradient(160deg, #ffffff 0%, #fffdf0 40%, #fff9d6 100%);
+      color: var(--text-p);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 800px 600px at 10% 20%, rgba(251,191,36,0.15) 0%, transparent 70%),
+        radial-gradient(ellipse 600px 800px at 90% 80%, rgba(245,158,11,0.10) 0%, transparent 70%),
+        radial-gradient(ellipse 400px 400px at 50% 50%, rgba(253,230,138,0.12) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+      animation: meshShift 12s ease-in-out infinite alternate;
+    }
+
+    @keyframes meshShift {
+      0%   { opacity: 1; }
+      100% { opacity: 0.7; filter: hue-rotate(10deg); }
+    }
+
+    /* ── LOGIN ── */
+    #loginPage {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      z-index: 10;
+    }
+
+    .login-wrap {
+      display: flex;
+      width: 920px;
+      max-width: 96vw;
+      min-height: 580px;
+      border-radius: 28px;
+      overflow: hidden;
+      border: 1px solid rgba(245,158,11,0.3);
+      box-shadow:
+        0 0 0 1px rgba(245,158,11,0.08),
+        0 40px 80px rgba(0,0,0,0.12),
+        0 0 80px rgba(251,191,36,0.15);
+      animation: loginRise 0.9s cubic-bezier(0.22,1,0.36,1) forwards;
+      opacity: 0;
+    }
+
+    @keyframes loginRise {
+      from { transform: translateY(50px) scale(0.96); opacity: 0; }
+      to   { transform: translateY(0) scale(1); opacity: 1; }
+    }
+
+    .login-left {
+      flex: 1;
+      background: linear-gradient(145deg, #fef3c7 0%, #fde68a 50%, #fbbf24 100%);
+      border-right: 1px solid rgba(245,158,11,0.3);
+      padding: 52px 44px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .login-left::before {
+      content: '';
+      position: absolute;
+      width: 300px; height: 300px;
+      background: radial-gradient(circle, rgba(255,255,255,0.5) 0%, transparent 70%);
+      top: -80px; right: -80px;
+      animation: orbPulse 4s ease-in-out infinite;
+    }
+
+    .login-left::after {
+      content: '';
+      position: absolute;
+      width: 200px; height: 200px;
+      background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
+      bottom: -50px; left: -50px;
+      animation: orbPulse 5s ease-in-out infinite reverse;
+    }
+
+    @keyframes orbPulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50%      { transform: scale(1.2); opacity: 0.7; }
+    }
+
+    .login-brand { display: flex; align-items: center; position: relative; z-index: 1; }
+
+    .login-logo-wrap {
+      width: 140px; height: auto;
+      border-radius: 10px;
+      overflow: hidden;
+      background: rgba(255,255,255,0.6);
+      border: 1px solid rgba(217,119,6,0.25);
+      box-shadow: 0 0 30px rgba(217,119,6,0.4);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      animation: cubeGlow 3s ease-in-out infinite;
+    }
+
+    .login-logo-wrap img { width: 100%; height: 100%; object-fit: contain; border-radius: 20px; }
+
+    @keyframes cubeGlow {
+      0%, 100% { box-shadow: 0 0 30px rgba(217,119,6,0.4); }
+      50%       { box-shadow: 0 0 50px rgba(217,119,6,0.7), 0 0 80px rgba(245,158,11,0.25); }
+    }
+
+    .login-hero { position: relative; z-index: 1; }
+
+    .login-hero h2 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 42px; font-weight: 800; line-height: 1.1;
+      background: linear-gradient(135deg, #1c1917 0%, #92400e 50%, #d97706 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: 16px;
+    }
+
+    .login-hero p { font-size: 14px; color: rgba(28,25,23,0.6); line-height: 1.8; max-width: 280px; }
+
+    .feature-list { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 12px; }
+
+    .feature-item { display: flex; align-items: center; gap: 12px; font-size: 13px; color: rgba(28,25,23,0.7); }
+
+    .feat-dot {
+      width: 28px; height: 28px; flex-shrink: 0;
+      background: rgba(255,255,255,0.5);
+      border: 1px solid rgba(217,119,6,0.3);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px;
+    }
+
+    .login-right {
+      width: 380px;
+      background: rgba(255,255,255,0.97);
+      backdrop-filter: blur(30px);
+      padding: 52px 40px;
+      display: flex; flex-direction: column; justify-content: center;
+    }
+
+    .login-right h3 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 26px; font-weight: 700; color: var(--text-p);
+      margin-bottom: 6px;
+    }
+
+    .login-right .sub { font-size: 13px; color: var(--text-s); margin-bottom: 34px; }
+
+    .field { margin-bottom: 18px; }
+
+    .field label {
+      display: block; font-size: 11px; font-weight: 600;
+      letter-spacing: 0.8px; color: var(--text-s);
+      text-transform: uppercase; margin-bottom: 8px;
+    }
+
+    .field input {
+      width: 100%; padding: 13px 16px;
+      background: #fef9ec;
+      border: 1px solid rgba(245,158,11,0.3);
+      border-radius: 10px; color: var(--text-p);
+      font-family: 'Space Grotesk', sans-serif; font-size: 14px;
+      outline: none; transition: all 0.3s;
+    }
+
+    .field input::placeholder { color: rgba(28,25,23,0.3); }
+
+    .field input:focus {
+      border-color: var(--yellow);
+      background: #fffbf0;
+      box-shadow: 0 0 0 4px rgba(245,158,11,0.12), 0 0 20px rgba(245,158,11,0.1);
+    }
+
+    .login-btn {
+      width: 100%; padding: 14px;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      border: none; border-radius: 10px; color: white;
+      font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 700;
+      cursor: pointer; margin-top: 8px; transition: all 0.3s;
+      box-shadow: 0 8px 25px rgba(245,158,11,0.4);
+      position: relative; overflow: hidden;
+    }
+
+    .login-btn::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent);
+      opacity: 0; transition: opacity 0.3s;
+    }
+
+    .login-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 35px rgba(245,158,11,0.55); }
+    .login-btn:hover::before { opacity: 1; }
+    .login-btn:active { transform: translateY(0); }
+
+    #msg { font-size: 13px; color: #e11d48; margin-top: 14px; text-align: center; min-height: 20px; }
+
+    /* ── DASHBOARD ── */
+    #dashboard { display: none; min-height: 100vh; position: relative; z-index: 1; }
+
+    .sidebar {
+      position: fixed; left: 0; top: 0; bottom: 0;
+      width: var(--sidebar-w);
+      background: linear-gradient(180deg, rgba(255,253,240,0.98) 0%, rgba(255,249,214,0.99) 100%);
+      border-right: 1px solid rgba(245,158,11,0.2);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      backdrop-filter: blur(20px);
+      animation: slideIn 0.5s cubic-bezier(0.22,1,0.36,1);
+    }
+
+    .sidebar::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 200px;
+      background: linear-gradient(180deg, rgba(251,191,36,0.1) 0%, transparent 100%);
+      pointer-events: none;
+    }
+
+    @keyframes slideIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+
+    .sidebar-top {
+      padding: 16px 12px;
+      border-bottom: 1px solid rgba(245,158,11,0.15);
+      display: flex;
+      justify-content: center;
+      position: relative;
+    }
+
+    .sb-logo-wrap {
+      width: 140px; height: auto;
+      border-radius: 10px;
+      overflow: hidden;
+      background: rgba(255,255,255,0.7);
+      border: 1px solid rgba(245,158,11,0.3);
+      box-shadow: 0 0 16px rgba(245,158,11,0.3);
+      display: flex; align-items: center; justify-content: center;
+      animation: cubeGlow 3s ease-in-out infinite;
+    }
+
+    .sb-logo-wrap img { width: 100%; height: 100%; object-fit: contain; border-radius: 14px; }
+
+    .sb-nav {
+      padding: 12px 10px;
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1.5px solid transparent;
+      background: transparent;
+      color: rgba(28,25,23,0.65);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      text-align: left;
+      line-height: 1;
+      position: relative;
+    }
+
+    .nav-item .nav-icon {
+      font-size: 16px;
+      flex-shrink: 0;
+      width: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+
+    .nav-item .nav-label {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .nav-item:hover {
+      background: rgba(245,158,11,0.1);
+      color: #92400e;
+    }
+
+    .nav-item.active {
+      background: linear-gradient(135deg, rgba(245,158,11,0.22), rgba(251,191,36,0.12));
+      border-color: rgba(245,158,11,0.4);
+      color: #92400e;
+      box-shadow: 0 4px 14px rgba(245,158,11,0.18);
+    }
+
+    .sheet-open-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: calc(100% - 20px);
+      margin: 0 10px 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1.5px solid rgba(16,185,129,0.3);
+      background: rgba(16,185,129,0.08);
+      color: #065f46;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      line-height: 1;
+    }
+
+    .sheet-open-btn .nav-icon {
+      font-size: 16px;
+      flex-shrink: 0;
+      width: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .sheet-open-btn:hover {
+      background: rgba(16,185,129,0.15);
+      border-color: rgba(16,185,129,0.5);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(16,185,129,0.15);
+    }
+
+    .sb-footer {
+      padding: 8px 10px 14px;
+      border-top: 1px solid rgba(245,158,11,0.12);
+    }
+
+    .logout-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1.5px solid transparent;
+      background: transparent;
+      color: rgba(190,18,60,0.7);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      text-align: left;
+      line-height: 1;
+    }
+
+    .logout-btn .nav-icon {
+      font-size: 16px;
+      flex-shrink: 0;
+      width: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logout-btn:hover {
+      background: rgba(244,63,94,0.08);
+      border-color: rgba(244,63,94,0.2);
+      color: #be123c;
+    }
+
+    .main {
+      margin-left: var(--sidebar-w);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      animation: fadeUp 0.6s ease forwards;
+      opacity: 0;
+      animation-delay: 0.2s;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .topbar {
+      position: sticky; top: 0; z-index: 90;
+      background: rgba(255,253,240,0.92);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(245,158,11,0.2);
+      padding: 16px 28px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+
+    .topbar::after {
+      content: '';
+      position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, #f59e0b, #fbbf24, transparent);
+      opacity: 0.6;
+    }
+
+    .topbar-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 20px; font-weight: 700;
+      background: linear-gradient(135deg, #1c1917, #92400e);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    .topbar-sub { font-size: 11px; color: var(--text-m); margin-top: 2px; }
+
+    .topbar-right { display: flex; gap: 10px; align-items: center; }
+
+    .btn-refresh {
+      padding: 9px 18px;
+      background: rgba(245,158,11,0.1);
+      border: 1px solid rgba(245,158,11,0.3);
+      border-radius: 10px; color: #92400e;
+      font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 500;
+      cursor: pointer; transition: all 0.3s;
+    }
+
+    .btn-refresh:hover {
+      background: rgba(245,158,11,0.2);
+      border-color: rgba(245,158,11,0.5);
+      box-shadow: 0 0 20px rgba(245,158,11,0.15);
+    }
+
+    .btn-logout {
+      padding: 9px 18px;
+      background: rgba(244,63,94,0.08);
+      border: 1px solid rgba(244,63,94,0.2);
+      border-radius: 10px; color: #be123c;
+      font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 500;
+      cursor: pointer; transition: all 0.3s;
+    }
+
+    .btn-logout:hover { background: rgba(244,63,94,0.14); border-color: rgba(244,63,94,0.35); }
+
+    .content { padding: 24px 28px; }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      border-radius: 20px;
+      padding: 22px;
+      position: relative; overflow: hidden;
+      border: 1px solid;
+      animation: cardRise 0.6s ease forwards;
+      opacity: 0; cursor: default;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .stat-card:hover { transform: translateY(-4px); }
+
+    .stat-card:nth-child(1) { background: linear-gradient(145deg, rgba(245,158,11,0.15), rgba(245,158,11,0.04)); border-color: rgba(245,158,11,0.3); animation-delay: 0.1s; }
+    .stat-card:nth-child(2) { background: linear-gradient(145deg, rgba(251,191,36,0.15), rgba(251,191,36,0.04)); border-color: rgba(251,191,36,0.3); animation-delay: 0.2s; }
+    .stat-card:nth-child(3) { background: linear-gradient(145deg, rgba(16,185,129,0.15), rgba(16,185,129,0.04)); border-color: rgba(16,185,129,0.25); animation-delay: 0.3s; }
+    .stat-card:nth-child(4) { background: linear-gradient(145deg, rgba(99,102,241,0.12), rgba(99,102,241,0.03)); border-color: rgba(99,102,241,0.2); animation-delay: 0.4s; }
+
+    @keyframes cardRise {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .stat-card::after {
+      content: ''; position: absolute;
+      width: 120px; height: 120px; border-radius: 50%;
+      top: -30px; right: -30px; filter: blur(30px);
+      animation: orbPulse 4s ease-in-out infinite;
+    }
+
+    .stat-card:nth-child(1)::after { background: rgba(245,158,11,0.3); }
+    .stat-card:nth-child(2)::after { background: rgba(251,191,36,0.3); }
+    .stat-card:nth-child(3)::after { background: rgba(16,185,129,0.3); }
+    .stat-card:nth-child(4)::after { background: rgba(99,102,241,0.2); }
+
+    .stat-ico-wrap {
+      width: 44px; height: 44px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; margin-bottom: 14px;
+      position: relative; z-index: 1;
+    }
+
+    .stat-card:nth-child(1) .stat-ico-wrap { background: rgba(245,158,11,0.18); }
+    .stat-card:nth-child(2) .stat-ico-wrap { background: rgba(251,191,36,0.18); }
+    .stat-card:nth-child(3) .stat-ico-wrap { background: rgba(16,185,129,0.18); }
+    .stat-card:nth-child(4) .stat-ico-wrap { background: rgba(99,102,241,0.15); }
+
+    .stat-label { font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase; font-weight: 600; color: rgba(28,25,23,0.4); margin-bottom: 6px; position: relative; z-index: 1; }
+    .stat-value { font-family: 'Outfit', sans-serif; font-size: 26px; font-weight: 800; line-height: 1; margin-bottom: 6px; position: relative; z-index: 1; }
+    .stat-card:nth-child(1) .stat-value { color: #b45309; }
+    .stat-card:nth-child(2) .stat-value { color: #d97706; }
+    .stat-card:nth-child(3) .stat-value { color: #065f46; }
+    .stat-card:nth-child(4) .stat-value { color: #4338ca; }
+    .stat-sub { font-size: 12px; color: rgba(28,25,23,0.35); position: relative; z-index: 1; }
+
+    .filters-bar {
+      background: rgba(255,253,240,0.9);
+      border: 1px solid rgba(245,158,11,0.2);
+      border-radius: 16px; padding: 18px 22px;
+      margin-bottom: 20px;
+      display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap;
+      backdrop-filter: blur(10px);
+    }
+
+    .filter-group { flex: 1; min-width: 180px; display: flex; flex-direction: column; gap: 7px; }
+
+    .filter-group label { font-size: 10px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: rgba(28,25,23,0.4); }
+
+    .filter-input {
+      padding: 10px 14px;
+      background: #fffbf0;
+      border: 1px solid rgba(245,158,11,0.25);
+      border-radius: 10px; color: var(--text-p);
+      font-family: 'Space Grotesk', sans-serif; font-size: 13px;
+      outline: none; transition: all 0.3s;
+    }
+
+    .filter-input::placeholder { color: rgba(28,25,23,0.25); }
+
+    .filter-input:focus {
+      border-color: var(--yellow);
+      background: #fffdf5;
+      box-shadow: 0 0 0 3px rgba(245,158,11,0.12);
+    }
+
+    .btn-clear {
+      padding: 10px 20px;
+      background: rgba(245,158,11,0.1);
+      border: 1px solid rgba(245,158,11,0.25);
+      border-radius: 10px; color: #92400e;
+      font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 500;
+      cursor: pointer; transition: all 0.2s; white-space: nowrap;
+    }
+
+    .btn-clear:hover { background: rgba(245,158,11,0.2); }
+
+    .tabs {
+      display: flex; gap: 4px;
+      background: rgba(255,253,240,0.9);
+      border: 1px solid rgba(245,158,11,0.2);
+      border-radius: 14px; padding: 5px;
+      margin-bottom: 18px; width: fit-content;
+    }
+
+    .tab-btn {
+      padding: 10px 26px; border-radius: 10px; border: none;
+      background: transparent; color: rgba(28,25,23,0.4);
+      font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 500;
+      cursor: pointer; transition: all 0.3s;
+    }
+
+    .tab-btn.active {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: white;
+      box-shadow: 0 6px 20px rgba(245,158,11,0.4);
+    }
+
+    .table-card {
+      background: rgba(255,253,240,0.9);
+      border: 1px solid rgba(245,158,11,0.2);
+      border-radius: 20px; overflow: hidden;
+      backdrop-filter: blur(10px);
+    }
+
+    .table-hd {
+      padding: 16px 22px; border-bottom: 1px solid rgba(245,158,11,0.15);
+      display: flex; justify-content: space-between; align-items: center;
+      background: linear-gradient(135deg, rgba(245,158,11,0.08), rgba(251,191,36,0.04));
+    }
+
+    .table-hd-title { font-size: 14px; font-weight: 600; color: var(--text-p); }
+
+    .table-badge {
+      font-size: 11px; color: #92400e;
+      background: rgba(245,158,11,0.12);
+      border: 1px solid rgba(245,158,11,0.25);
+      padding: 5px 14px; border-radius: 20px; font-weight: 500;
+    }
+
+    .table-scroll { overflow-x: auto; max-height: 520px; overflow-y: auto; }
+
+    table { width: 100%; border-collapse: collapse; }
+
+    thead { position: sticky; top: 0; z-index: 20; }
+
+    th {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 60%, #b45309 100%);
+      padding: 13px 16px;
+      text-align: left; font-size: 10px; letter-spacing: 1.2px;
+      text-transform: uppercase; font-weight: 700; color: #fff8e7;
+      border-bottom: 2px solid rgba(180,83,9,0.35);
+      white-space: nowrap;
+      text-shadow: 0 1px 3px rgba(120,50,0,0.25);
+    }
+    th:first-child { border-left: 3px solid #fef3c7; }
+
+    td {
+      padding: 12px 16px; font-size: 13px;
+      border-bottom: 1px solid rgba(0,0,0,0.04);
+      color: rgba(28,25,23,0.65); white-space: nowrap;
+    }
+
+    tbody tr { transition: background 0.2s; }
+    tbody tr:hover { background: rgba(245,158,11,0.06); }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:nth-child(even) { background: rgba(0,0,0,0.018); }
+    tbody tr:nth-child(even):hover { background: rgba(245,158,11,0.06); }
+
+    /* Source badge in combined table */
+    .badge-pvt {
+      display: inline-block;
+      padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;
+      background: rgba(245,158,11,0.15); color: #92400e;
+      border: 1px solid rgba(245,158,11,0.3);
+    }
+    .badge-rly {
+      display: inline-block;
+      padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;
+      background: rgba(99,102,241,0.12); color: #4338ca;
+      border: 1px solid rgba(99,102,241,0.25);
+    }
+
+    .amount-pos { font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 700; color: #b45309; }
+    .amount-neg { font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 700; color: #be123c; }
+
+    .table-ft {
+      padding: 16px 22px; border-top: 1px solid rgba(245,158,11,0.15);
+      display: flex; justify-content: space-between; align-items: center;
+      background: linear-gradient(135deg, rgba(245,158,11,0.08), rgba(251,191,36,0.04));
+    }
+
+    .total-label { font-size: 11px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: rgba(28,25,23,0.35); }
+    .total-value { font-family: 'Outfit', sans-serif; font-size: 24px; font-weight: 800; color: #b45309; }
+
+    .skeleton {
+      background: linear-gradient(90deg, rgba(245,158,11,0.08) 25%, rgba(245,158,11,0.16) 50%, rgba(245,158,11,0.08) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 6px; height: 16px;
+    }
+
+    @keyframes shimmer { to { background-position: -200% 0; } }
+
+    .spinner {
+      width: 32px; height: 32px;
+      border: 3px solid rgba(245,158,11,0.15);
+      border-top-color: #f59e0b;
+      border-radius: 50%; animation: spin 0.8s linear infinite;
+      margin: 40px auto;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .toast {
+      position: fixed; bottom: 24px; right: 24px;
+      background: rgba(255,253,240,0.97);
+      border: 1px solid rgba(245,158,11,0.25);
+      border-radius: 12px; padding: 14px 20px;
+      font-size: 13px; font-weight: 500; color: var(--text-p);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+      z-index: 9999;
+      transform: translateX(120%); transition: transform 0.4s cubic-bezier(0.22,1,0.36,1);
+      border-left: 3px solid var(--emerald);
+      backdrop-filter: blur(20px);
+    }
+
+    .toast.show { transform: translateX(0); }
+    .toast.err { border-left-color: var(--rose); }
+
+    .empty-state { text-align: center; padding: 56px; color: var(--text-m); font-size: 14px; }
+    .empty-icon { font-size: 40px; margin-bottom: 14px; }
+
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(245,158,11,0.3); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(245,158,11,0.5); }
+
+    @media (max-width: 1100px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 700px) {
+      .login-left { display: none; }
+      .login-wrap { width: 100%; border-radius: 0; min-height: 100vh; }
+      .login-right { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════ LOGIN PAGE ══════════════ -->
+<div id="loginPage">
+  <div class="login-wrap">
+    <div class="login-left">
+      <div class="login-brand">
+        <div class="login-logo-wrap">
+          <img src="https://lh3.googleusercontent.com/d/15l_vE2D1_9cDUuzucB-XllyF-sFmqa_x" alt="KSK Logo">
+        </div>
+      </div>
+
+      <div class="login-hero">
+        <h2>Finance<br>Management<br>System</h2>
+        <p>Access real-time outstanding balances, party ledgers and account summaries in one secure dashboard.</p>
+      </div>
+
+      <div class="feature-list">
+        <div class="feature-item"><div class="feat-dot">🏢</div>Private & Railway party ledgers</div>
+        <div class="feature-item"><div class="feat-dot">🔍</div>Filter by assigned person or party</div>
+        <div class="feature-item"><div class="feat-dot">⚡</div>Live outstanding calculations</div>
+        <div class="feature-item"><div class="feat-dot">📄</div>Direct Google Sheet access</div>
+      </div>
+    </div>
+
+    <div class="login-right">
+      <h3>Welcome back</h3>
+      <p class="sub">Sign in to access your dashboard</p>
+
+      <div class="field">
+        <label>Username</label>
+        <input type="text" id="user" placeholder="Enter username" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="pass" placeholder="Enter password">
+      </div>
+      <button class="login-btn" onclick="login()">Sign In →</button>
+      <p id="msg"></p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ DASHBOARD ══════════════ -->
+<div id="dashboard">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-top">
+      <div class="sb-logo-wrap">
+        <img src="https://lh3.googleusercontent.com/d/15l_vE2D1_9cDUuzucB-XllyF-sFmqa_x" alt="KSK Logo">
+      </div>
+    </div>
+
+    <div class="sb-nav">
+      <button class="nav-item active" id="nav-overview" onclick="showSection('overview', this)">
+        <span class="nav-icon">📊</span>
+        <span class="nav-label">Overview</span>
+      </button>
+      <button class="nav-item" id="nav-pvt" onclick="showSection('pvt', this)">
+        <span class="nav-icon">🏢</span>
+        <span class="nav-label">Master Pvt.</span>
+      </button>
+      <button class="nav-item" id="nav-rly" onclick="showSection('rly', this)">
+        <span class="nav-icon">🚂</span>
+        <span class="nav-label">Master Rly.</span>
+      </button>
+    </div>
+
+    <a class="sheet-open-btn"
+       href="https://docs.google.com/spreadsheets/d/16G3IW4uUBLqEB1h1b25yM_LopadprTmFArj1NRXQRY4/edit?gid=103702963#gid=103702963"
+       target="_blank">
+      <span class="nav-icon">📄</span>
+      <span class="nav-label">Open Sheet</span>
+    </a>
+
+    <div class="sb-footer">
+      <button class="logout-btn" onclick="logout()">
+        <span class="nav-icon">🚪</span>
+        <span class="nav-label">Logout</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-title">Financial Dashboard</div>
+        <div class="topbar-sub" id="lastUpdated">Loading data…</div>
+      </div>
+      <div class="topbar-right">
+        <button class="btn-refresh" id="refreshBtn" onclick="handleRefresh()">↻ Refreshing…</button>
+        <button class="btn-logout" onclick="logout()">Logout</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- STAT CARDS -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-ico-wrap">🏢</div>
+          <div class="stat-label">Pvt. Outstanding</div>
+          <div class="stat-value" id="pvtTotal"><div class="skeleton" style="width:110px;height:22px"></div></div>
+          <div class="stat-sub" id="pvtCount">— entries</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-ico-wrap">🚂</div>
+          <div class="stat-label">Rly. Outstanding</div>
+          <div class="stat-value" id="rlyTotal"><div class="skeleton" style="width:110px;height:22px"></div></div>
+          <div class="stat-sub" id="rlyCount">— entries</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-ico-wrap">💰</div>
+          <div class="stat-label">Total Outstanding</div>
+          <div class="stat-value" id="grandTotal"><div class="skeleton" style="width:110px;height:22px"></div></div>
+          <div class="stat-sub" id="filteredNote">Combined balance</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-ico-wrap">👥</div>
+          <div class="stat-label">Unique Parties</div>
+          <div class="stat-value" id="totalParties"><div class="skeleton" style="width:60px;height:22px"></div></div>
+          <div class="stat-sub">Active accounts</div>
+        </div>
+      </div>
+
+      <!-- FILTERS -->
+      <div class="filters-bar">
+        <div class="filter-group">
+          <label>🔍 Assigned To</label>
+          <input class="filter-input" id="filterAssigned" type="text" placeholder="Filter by assigned person…" oninput="applyFilters()">
+        </div>
+        <div class="filter-group">
+          <label>🏷️ Party Name</label>
+          <input class="filter-input" id="filterParty" type="text" placeholder="Filter by party name…" oninput="applyFilters()">
+        </div>
+        <button class="btn-clear" onclick="clearFilters()">✕ Clear Filters</button>
+      </div>
+
+      <!-- TABS — All Records is default -->
+      <div class="tabs">
+        <button class="tab-btn active" id="tabAll" onclick="switchTab('allTab', this)">🔀 All Records</button>
+        <button class="tab-btn"        id="tabPvt" onclick="switchTab('pvtTab', this)">🏢 Master Pvt.</button>
+        <button class="tab-btn"        id="tabRly" onclick="switchTab('rlyTab', this)">🚂 Master Rly.</button>
+      </div>
+
+      <!-- ══ COMBINED TAB (default) ══ -->
+      <div id="allTab">
+        <div class="table-card">
+          <div class="table-hd">
+            <div class="table-hd-title">All Records — Pvt. + Rly. Combined</div>
+            <span class="table-badge" id="allRowCount">Loading…</span>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead id="allHead"></thead>
+              <tbody id="allBody"><tr><td colspan="10"><div class="spinner"></div></td></tr></tbody>
+            </table>
+          </div>
+          <div class="table-ft">
+            <span class="total-label">Filtered Outstanding</span>
+            <span class="total-value" id="allFilteredTotal">₹0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ PVT TAB ══ -->
+      <div id="pvtTab" style="display:none;">
+        <div class="table-card">
+          <div class="table-hd">
+            <div class="table-hd-title">Master Pvt. — Records</div>
+            <span class="table-badge" id="pvtRowCount">Loading…</span>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead id="pvtHead"></thead>
+              <tbody id="pvtBody"><tr><td colspan="10"><div class="spinner"></div></td></tr></tbody>
+            </table>
+          </div>
+          <div class="table-ft">
+            <span class="total-label">Filtered Outstanding</span>
+            <span class="total-value" id="pvtFilteredTotal">₹0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ RLY TAB ══ -->
+      <div id="rlyTab" style="display:none;">
+        <div class="table-card">
+          <div class="table-hd">
+            <div class="table-hd-title">Master Rly. — Records</div>
+            <span class="table-badge" id="rlyRowCount">Loading…</span>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead id="rlyHead"></thead>
+              <tbody id="rlyBody"><tr><td colspan="10"><div class="spinner"></div></td></tr></tbody>
+            </table>
+          </div>
+          <div class="table-ft">
+            <span class="total-label">Filtered Outstanding</span>
+            <span class="total-value" id="rlyFilteredTotal">₹0</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  let allData = { pvt: [], rly: [] };
+  let pvtMeta = { assignedCol: -1, partyCol: -1, amountCols: [], dateColIndices: new Set(), plainNumCols: new Set() };
+  let rlyMeta = { assignedCol: -1, partyCol: -1, amountCols: [], dateColIndices: new Set(), plainNumCols: new Set() };
+
+  const DATE_KEYWORDS   = ['date','dt','day','month','year','time','period','due','duedate','saledate','realis','expected','promise'];
+  const DAYS_KEYWORDS   = ['days','outstanding days','promise','overdue','aging','age','dso','tenure','term','credit days','credit period','pending days'];
+  const AMOUNT_KEYWORDS = ['amount','outstanding','balance','total','value','debit','credit','receivable','payable','bill','invoice','rs','inr','₹'];
+
+  function classifyHeader(h) {
+    const hl = String(h).toLowerCase().replace(/[^a-z]/g, '');
+    if (DATE_KEYWORDS.some(k   => hl.includes(k.replace(/[^a-z]/g,'')))) return 'date';
+    if (DAYS_KEYWORDS.some(k   => hl.includes(k.replace(/[^a-z]/g,'')))) return 'days';
+    if (AMOUNT_KEYWORDS.some(k => hl.includes(k.replace(/[^a-z]/g,'')))) return 'amount';
+    return 'unknown';
+  }
+
+  function detectColumns(headers) {
+    const meta = { assignedCol: -1, partyCol: -1, amountCols: [], dateColIndices: new Set(), plainNumCols: new Set() };
+    headers.forEach((h, i) => {
+      const hl = String(h).toLowerCase().trim();
+      if (meta.assignedCol === -1 && (hl.includes('assign') || hl.includes('person') || hl.includes('incharge') || hl.includes('salesman') || hl.includes('executive'))) {
+        meta.assignedCol = i;
+      }
+      if (meta.partyCol === -1 && (hl.includes('party') || hl.includes('name') || hl.includes('customer') || hl.includes('client'))) {
+        meta.partyCol = i;
+      }
+      const type = classifyHeader(h);
+      if (type === 'date' || type === 'days') meta.plainNumCols.add(i);
+      if (type === 'amount') meta.amountCols.push(i);
+    });
+    if (meta.partyCol === -1) meta.partyCol = 0;
+    return meta;
+  }
+
+  function shouldShowRupee(colIndex, value, meta) {
+    if (meta.plainNumCols.has(colIndex)) return false;
+    if (meta.amountCols.length > 0) return meta.amountCols.includes(colIndex);
+    if (colIndex === 0) return false;
+    const str = String(value);
+    if (/\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}/.test(str)) return false;
+    const num = parseFloat(str.replace(/,/g, ''));
+    return !isNaN(num) && Math.abs(num) >= 1000;
+  }
+
+  function countUniqueParties(pvtRows, rlyRows) {
+    const seen = new Set();
+    const add = (rows, meta) => {
+      rows.forEach(row => {
+        const val = String(row[meta.partyCol >= 0 ? meta.partyCol : 0] || '').trim().toLowerCase();
+        if (val) seen.add(val);
+      });
+    };
+    add(pvtRows, pvtMeta);
+    add(rlyRows, rlyMeta);
+    return seen.size;
+  }
+
+  function login() {
+    const u = document.getElementById('user').value.trim();
+    const p = document.getElementById('pass').value.trim();
+    const btn = document.querySelector('.login-btn');
+    if (!u || !p) { document.getElementById('msg').innerText = '⚠ Please fill both fields.'; return; }
+    btn.textContent = 'Verifying…'; btn.disabled = true;
+    google.script.run
+      .withSuccessHandler(function(res) {
+        if (res) {
+          document.getElementById('loginPage').style.display = 'none';
+          document.getElementById('dashboard').style.display = 'block';
+          loadData();
+        } else {
+          document.getElementById('msg').innerText = '✖ Invalid username or password.';
+          btn.textContent = 'Sign In →'; btn.disabled = false;
+        }
+      })
+      .withFailureHandler(function(err) {
+        document.getElementById('msg').innerText = '⚠ ' + err.message;
+        btn.textContent = 'Sign In →'; btn.disabled = false;
+      })
+      .checkLogin(u, p);
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && document.getElementById('loginPage').style.display !== 'none') login();
+  });
+
+  function loadData() {
+  document.getElementById('lastUpdated').textContent = 'Fetching data…';
+
+  // ✅ Stat cards ko skeleton state mein reset karo
+  ['pvtTotal','rlyTotal','grandTotal','totalParties'].forEach(id => {
+    document.getElementById(id).innerHTML = '<div class="skeleton" style="width:100px;height:22px"></div>';
+  });
+
+  google.script.run
+    .withSuccessHandler(function(data) {
+      // ✅ Data validation check
+      if (!data || !data.pvt || !data.rly) {
+        showToast('✖ Invalid data received from server', true);
+        document.getElementById('lastUpdated').textContent = 'Load failed — invalid data.';
+        return;
+      }
+
+      allData = data;  // ✅ Global update
+
+      const pvtHeaders = data.pvt[0] || [];
+      const rlyHeaders = data.rly[0] || [];
+
+      pvtMeta = detectColumns(pvtHeaders);
+      rlyMeta = detectColumns(rlyHeaders);
+
+      renderHead('pvt', pvtHeaders);
+      renderHead('rly', rlyHeaders);
+
+      const pvtRows = data.pvt.slice(1).filter(r => !isEmptyRow(r));
+      const rlyRows = data.rly.slice(1).filter(r => !isEmptyRow(r));
+
+      document.getElementById('pvtCount').textContent    = pvtRows.length + ' entries';
+      document.getElementById('rlyCount').textContent    = rlyRows.length + ' entries';
+      document.getElementById('totalParties').textContent = countUniqueParties(pvtRows, rlyRows);
+
+      // ✅ Filters clear karke fresh render karo
+      clearFilters();  // yeh applyFilters() bhi call karta hai
+
+      const now = new Date();
+      document.getElementById('lastUpdated').textContent =
+        'Last updated: ' + now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+
+      showToast('✓ Data refreshed successfully');
+    })
+    .withFailureHandler(function(err) {
+      document.getElementById('lastUpdated').textContent = 'Failed to load.';
+      showToast('✖ ' + (err.message || 'Unknown error'), true);
+
+      // ✅ Skeleton hata ke error message dikhao
+      ['pvtTotal','rlyTotal','grandTotal','totalParties'].forEach(id => {
+        document.getElementById(id).textContent = '—';
+      });
+    })
+    .getDashboardData();
+}
+
+  function trimRow(row) {
+    let last = row.length - 1;
+    while (last >= 0 && (row[last] === null || row[last] === undefined || String(row[last]).trim() === '')) last--;
+    return row.slice(0, last + 1);
+  }
+
+  function renderHead(type, headers) {
+    const headEl = document.getElementById(type + 'Head');
+    const trimmed = trimRow(headers);
+    let html = '<tr>';
+    trimmed.forEach(h => { html += `<th>${h !== null && h !== undefined && h !== '' ? h : '—'}</th>`; });
+    html += '</tr>';
+    headEl.innerHTML = html;
+  }
+
+  function getAmountFromRow(row, meta) {
+    if (meta.amountCols.length > 0) {
+      for (const ci of meta.amountCols) {
+        const v = parseFloat(String(row[ci] || '').replace(/,/g, ''));
+        if (!isNaN(v)) return v;
+      }
+    }
+    for (let i = 1; i < row.length; i++) {
+      if (meta.plainNumCols.has(i)) continue;
+      const v = parseFloat(String(row[i] || '').replace(/,/g, ''));
+      if (!isNaN(v) && Math.abs(v) >= 1000) return v;
+    }
+    return 0;
+  }
+
+  function isEmptyRow(row) {
+    return row.every(cell => cell === null || cell === undefined || String(cell).trim() === '');
+  }
+
+  function filterRows(body, meta) {
+    const assignedQ = document.getElementById('filterAssigned').value.toLowerCase().trim();
+    const partyQ    = document.getElementById('filterParty').value.toLowerCase().trim();
+    return body.filter(row => {
+      if (isEmptyRow(row)) return false;
+      const assigned = meta.assignedCol >= 0 ? String(row[meta.assignedCol] || '').toLowerCase() : '';
+      const party    = meta.partyCol >= 0    ? String(row[meta.partyCol]    || '').toLowerCase() : row.map(c => String(c)).join(' ').toLowerCase();
+      if (assignedQ && !assigned.includes(assignedQ)) return false;
+      if (partyQ    && !party.includes(partyQ))       return false;
+      return true;
+    });
+  }
+
+  function applyFilters() {
+    const assignedQ  = document.getElementById('filterAssigned').value.toLowerCase().trim();
+    const partyQ     = document.getElementById('filterParty').value.toLowerCase().trim();
+    const isFiltered = assignedQ || partyQ;
+
+    const pvtBody = (allData.pvt || []).slice(1);
+    const rlyBody = (allData.rly || []).slice(1);
+
+    const filteredPvt = filterRows(pvtBody, pvtMeta);
+    const filteredRly = filterRows(rlyBody, rlyMeta);
+
+    const pvtSum = filteredPvt.reduce((s, r) => s + getAmountFromRow(r, pvtMeta), 0);
+    const rlySum = filteredRly.reduce((s, r) => s + getAmountFromRow(r, rlyMeta), 0);
+    const grandSum = pvtSum + rlySum;
+
+    // ── Update stat cards ──
+    document.getElementById('pvtTotal').textContent   = isFiltered ? formatCurrency(pvtSum) : formatCurrency(pvtBody.reduce((s, r) => s + getAmountFromRow(r, pvtMeta), 0));
+    document.getElementById('rlyTotal').textContent   = isFiltered ? formatCurrency(rlySum) : formatCurrency(rlyBody.reduce((s, r) => s + getAmountFromRow(r, rlyMeta), 0));
+    document.getElementById('grandTotal').textContent = formatCurrency(grandSum);
+    document.getElementById('filteredNote').textContent = isFiltered ? 'Filtered combined total' : 'Combined balance';
+
+    // ── Combined tab ──
+    const pvtHeaders = (allData.pvt || [[]])[0] || [];
+    const rlyHeaders = (allData.rly || [[]])[0] || [];
+
+    // Build unified column headers: Source first, then trimmed pvt headers
+    const trimmedPvtHeaders = trimRow(pvtHeaders);
+    const allHeaders = ['Source', ...trimmedPvtHeaders];
+    document.getElementById('allHead').innerHTML =
+      '<tr>' + allHeaders.map(h => `<th>${h !== null && h !== undefined && h !== '' ? h : '—'}</th>`).join('') + '</tr>';
+
+    // Merge rows — pad/trim Rly rows to match trimmed Pvt column count
+    const pvtColCount = trimmedPvtHeaders.length;
+    const combinedRows = [
+      ...filteredPvt.map(r => ({ src: 'Pvt.', row: r })),
+      ...filteredRly.map(r => {
+        const padded = [...r];
+        while (padded.length < pvtColCount) padded.push('');
+        return { src: 'Rly.', row: padded.slice(0, pvtColCount) };
+      })
+    ];
+
+    // Render combined body — source col handled separately
+    const allBodyEl = document.getElementById('allBody');
+    if (combinedRows.length === 0) {
+      allBodyEl.innerHTML = '<tr><td colspan="' + allHeaders.length + '"><div class="empty-state"><div class="empty-icon">📭</div>No matching records</div></td></tr>';
+    } else {
+      let html = '';
+      combinedRows.forEach(({ src, row }) => {
+        html += '<tr>';
+        const badgeCls = src === 'Pvt.' ? 'badge-pvt' : 'badge-rly';
+        html += `<td><span class="${badgeCls}">${src}</span></td>`;
+        const trimmed = trimRow(row);
+        for (let ci = 0; ci < pvtColCount; ci++) {
+          const cell    = trimmed[ci] !== undefined ? trimmed[ci] : '';
+          const display = (cell !== null && cell !== undefined && cell !== '') ? cell : '—';
+          const numVal  = parseFloat(String(cell).replace(/,/g, ''));
+          const isNum   = !isNaN(numVal) && String(cell).trim() !== '';
+          if (isNum && shouldShowRupee(ci, cell, pvtMeta)) {
+            const cls   = numVal < 0 ? 'amount-neg' : 'amount-pos';
+            const shown = '₹' + Math.abs(numVal).toLocaleString('en-IN');
+            html += `<td class="${cls}">${shown}</td>`;
+          } else {
+            html += `<td>${display}</td>`;
+          }
+        }
+        html += '</tr>';
+      });
+      allBodyEl.innerHTML = html;
+    }
+
+    document.getElementById('allRowCount').textContent    = combinedRows.length + ' records (' + filteredPvt.length + ' Pvt. + ' + filteredRly.length + ' Rly.)';
+    document.getElementById('allFilteredTotal').textContent = formatCurrency(grandSum);
+
+    // ── Individual tabs ──
+    ['pvt', 'rly'].forEach(type => {
+      const filtered    = type === 'pvt' ? filteredPvt : filteredRly;
+      const body        = type === 'pvt' ? pvtBody : rlyBody;
+      const meta        = type === 'pvt' ? pvtMeta : rlyMeta;
+      const filteredSum = type === 'pvt' ? pvtSum : rlySum;
+      const fullSum     = body.reduce((s, r) => s + getAmountFromRow(r, meta), 0);
+      document.getElementById(type + 'FilteredTotal').textContent = formatCurrency(filteredSum);
+      document.getElementById(type + 'RowCount').textContent      = filtered.length + ' / ' + body.length + ' records';
+      renderRows(type, filtered, meta);
+    });
+  }
+
+  function renderRows(type, rows, meta) {
+    const bodyEl = document.getElementById(type + 'Body');
+    if (rows.length === 0) {
+      bodyEl.innerHTML = '<tr><td colspan="20"><div class="empty-state"><div class="empty-icon">📭</div>No matching records</div></td></tr>';
+      return;
+    }
+    // Find max meaningful column count across all rows (ignore trailing empty cells)
+    let maxCols = 0;
+    rows.forEach(row => { const t = trimRow(row); if (t.length > maxCols) maxCols = t.length; });
+    let html = '';
+    rows.forEach(row => {
+      html += '<tr>';
+      for (let ci = 0; ci < maxCols; ci++) {
+        const cell    = row[ci] !== undefined ? row[ci] : '';
+        const display = (cell !== null && cell !== undefined && cell !== '') ? cell : '—';
+        const numVal  = parseFloat(String(cell).replace(/,/g, ''));
+        const isNum   = !isNaN(numVal) && String(cell).trim() !== '';
+        if (isNum && shouldShowRupee(ci, cell, meta)) {
+          const cls   = numVal < 0 ? 'amount-neg' : 'amount-pos';
+          const shown = '₹' + Math.abs(numVal).toLocaleString('en-IN');
+          html += `<td class="${cls}">${shown}</td>`;
+        } else {
+          html += `<td>${display}</td>`;
+        }
+      }
+      html += '</tr>';
+    });
+    bodyEl.innerHTML = html;
+  }
+
+  function clearFilters() {
+  document.getElementById('filterAssigned').value = '';
+  document.getElementById('filterParty').value    = '';
+  applyFilters();  // ✅ Already hai, confirm karo yeh exist karta hai
+}
+function handleRefresh() {
+  const btn = document.getElementById('refreshBtn');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  btn.textContent = '↻ Refreshing…';
+  loadData();
+  setTimeout(() => {
+    btn.disabled = false;
+    btn.textContent = '↻ Refresh';
+  }, 4000);
+}
+
+  function switchTab(tabId, btn) {
+    ['allTab', 'pvtTab', 'rlyTab'].forEach(id => {
+      document.getElementById(id).style.display = 'none';
+    });
+    document.getElementById(tabId).style.display = 'block';
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
+  function showSection(section, el) {
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    el.classList.add('active');
+    if      (section === 'overview') switchTab('allTab', document.getElementById('tabAll'));
+    else if (section === 'pvt')      switchTab('pvtTab', document.getElementById('tabPvt'));
+    else if (section === 'rly')      switchTab('rlyTab', document.getElementById('tabRly'));
+  }
+
+  function formatCurrency(amount) {
+    if (isNaN(amount)) return '₹0';
+    const abs  = Math.abs(amount);
+    const sign = amount < 0 ? '-' : '';
+    if (abs >= 10000000) return sign + '₹' + (abs / 10000000).toFixed(2) + ' Cr';
+    if (abs >= 100000)   return sign + '₹' + (abs / 100000).toFixed(2)   + ' L';
+    return sign + '₹' + abs.toLocaleString('en-IN');
+  }
+
+  function showToast(msg, isErr = false) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast' + (isErr ? ' err' : '');
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  function logout() { location.reload(); }
+</script>
+</body>
+</html>
